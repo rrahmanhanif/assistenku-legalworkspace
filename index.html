@@ -187,11 +187,19 @@
         <p class="pill">Workspace</p>
         <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
         <p>Landing page ini siap dihubungkan ke domain <strong>legalworkspace.assistenku.com</strong>, sehingga semua user dapat langsung memilih portal yang dibutuhkan.</p>
+
+        <!-- UPDATED LINKS -->
         <div class="actions">
-          <a class="btn-primary" href="apps/login/index.html">Masuk Dashboard</a>
-          <a class="btn-secondary" href="apps/client/index.html">Portal Klien</a>
+          <a class="btn-primary" href="apps/login/index.html?role=ADMIN">Masuk sebagai Admin</a>
+          <a class="btn-secondary" href="apps/login/index.html?role=CLIENT">Portal Client</a>
+          <a class="btn-secondary"
+             href="apps/login/index.html?role=MITRA"
+             style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">
+            Portal Mitra
+          </a>
         </div>
       </div>
+
       <div>
         <div class="card" style="background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.2);">
           <p class="pill" style="background: rgba(255,255,255,0.14); color: #fff;">Status domain</p>
@@ -206,21 +214,32 @@
         <h2 style="margin: 0;">Akses cepat</h2>
         <p style="margin: 0; color: var(--muted);">Pilih portal sesuai peran pengguna.</p>
       </div>
+
       <div class="grid">
         <div class="card">
-          <h3>Dashboard Internal</h3>
-          <p>Kelola dokumen, tandatangan, dan workflow internal tim.</p>
-          <a class="btn-primary" href="apps/login/index.html">Buka Dashboard</a>
+          <h3>Panel Admin</h3>
+          <p>Akses penuh monitoring client dan mitra berdasarkan IPL digital.</p>
+          <a class="btn-primary" href="apps/login/index.html?role=ADMIN">Masuk sebagai Admin</a>
         </div>
+
         <div class="card">
           <h3>Portal Klien</h3>
           <p>Akses dokumen dan status penandatanganan dari sisi klien.</p>
-          <a class="btn-secondary" href="apps/client/index.html" style="color: var(--primary); background: #eef2ff;">Masuk Portal Klien</a>
+          <a class="btn-secondary"
+             href="apps/login/index.html?role=CLIENT"
+             style="color: var(--primary); background: #eef2ff;">
+            Masuk Portal Klien
+          </a>
         </div>
+
         <div class="card">
           <h3>Portal Mitra</h3>
           <p>Absensi, worklog, dan alur kerja untuk mitra dan konsultan.</p>
-          <a class="btn-secondary" href="apps/mitra/index.html" style="color: #0f172a; background: #fef3c7;">Buka Portal Mitra</a>
+          <a class="btn-secondary"
+             href="apps/login/index.html?role=MITRA"
+             style="color: #0f172a; background: #fef3c7;">
+            Buka Portal Mitra
+          </a>
         </div>
       </div>
     </section>
