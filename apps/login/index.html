@@ -1,77 +1,31 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/apps/login/index.html b/apps/login/index.html
-index ba249522d065b92a37748de1eceddd5d34f3d424..95bd12343dd171d302460b9f5c3e98c952f85b16 100644
---- a/apps/login/index.html
-+++ b/apps/login/index.html
-@@ -1,51 +1,31 @@
- <!DOCTYPE html>
- <html lang="id">
--
- <head>
-   <meta charset="UTF-8" />
--  <title>Login Legal System | Assistenku</title>
-+  <title>Login | Assistenku Legal</title>
-   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+  <link rel="stylesheet" href="/apps/login/style.css" />
-+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- </head>
- <body>
-+  <div class="login-container">
-+    <div class="login-card">
-+      <h1>Assistenku Legal</h1>
-+      <p class="subtitle">OTP login dengan validasi role (Client / Mitra)</p>
- 
--<h2>Login Sistem Legal Assistenku</h2>
--
--<h2>Akses Sistem</h2>
--<p>Akses hanya untuk pihak berwenang</p>
--
--<button class="btn" onclick="goLogin()">Login Sistem</button>
--<button class="btn" onclick="goClient()">Dashboard Client</button>
--<button class="btn" onclick="goMitra()">Dashboard Mitra</button>
--
--  
--  <script>
--async function afterLogin() {
--  const { data: { user }, error } = await supabase.auth.getUser();
--  if (error || !user) {
--    alert('Login gagal');
--    return;
--  }
--
--  const role = user.user_metadata?.role;
--
--  if (role === 'CLIENT') {
--    window.location.href = '/apps/client/';
--    return;
--  }
-+      <label for="email">Email</label>
-+      <input id="email" type="email" placeholder="email@perusahaan.com" />
- 
--  if (role === 'MITRA') {
--    window.location.href = '/apps/mitra/';
--    return;
--  }
-+      <label for="otp">OTP</label>
-+      <input id="otp" type="text" placeholder="Masukkan OTP 6 digit" />
- 
--  if (role === 'ADMIN') {
--    window.location.href = '/apps/dashboard/';
--    return;
--  }
-+      <button id="btnSend">Kirim OTP</button>
-+      <button id="btnVerify" style="margin-top: 10px;">Verifikasi & Masuk</button>
- 
--  alert('Role tidak dikenali. Hubungi admin.');
--}
--</script>
-+      <p class="note">Setelah verifikasi, user akan diarahkan otomatis ke dashboard sesuai role.</p>
-+    </div>
-+  </div>
- 
-+  <script type="module" src="/apps/login/login.js"></script>
- </body>
- </html>
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | Assistenku Legal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/apps/login/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <h1>Assistenku Legal</h1>
+      <p class="subtitle">OTP login dengan validasi role (Client / Mitra)</p>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="email@perusahaan.com" />
+
+      <label for="otp">OTP</label>
+      <input id="otp" type="text" placeholder="Masukkan OTP 6 digit" />
+
+      <button id="btnSend">Kirim OTP</button>
+      <button id="btnVerify" style="margin-top: 10px;">Verifikasi & Masuk</button>
+
+      <p class="note">Setelah verifikasi, user akan diarahkan otomatis ke dashboard sesuai role.</p>
+    </div>
+  </div>
+
+  <script type="module" src="/apps/login/login.js"></script>
+</body>
+</html>
