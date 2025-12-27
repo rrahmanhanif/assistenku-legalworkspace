@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Login | Assistenku Legal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="/apps/login/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -11,18 +12,64 @@
   <div class="login-container">
     <div class="login-card">
       <h1>Assistenku Legal</h1>
-      <p class="subtitle">OTP login dengan validasi role (Client / Mitra)</p>
+      <p class="subtitle">
+        Masuk atau daftar menggunakan OTP berbasis IPL digital.
+      </p>
 
+      <!-- ROLE SWITCHER -->
+      <div class="role-switcher" aria-label="Pilih portal">
+        <button class="role-btn active" data-role="CLIENT">Portal Client</button>
+        <button class="role-btn" data-role="MITRA">Portal Mitra</button>
+        <button class="role-btn" data-role="ADMIN">Portal Admin</button>
+      </div>
+
+      <!-- NOTICE -->
+      <div class="notice">
+        <p>
+          <strong>Verifikasi IPL</strong>:
+          pilih dokumen IPL / kontrak digital Anda dari folder
+          <code>documents/templates</code>.
+          Tanpa dokumen ini, akses akan ditolak.
+        </p>
+      </div>
+
+      <!-- EMAIL -->
       <label for="email">Email</label>
-      <input id="email" type="email" placeholder="email@perusahaan.com" />
+      <input
+        id="email"
+        type="email"
+        placeholder="email@perusahaan.com"
+        autocomplete="email"
+      />
 
+      <!-- IPL SELECT -->
+      <label for="iplSelect">Dokumen IPL Digital</label>
+      <select id="iplSelect"></select>
+      <small class="helper">
+        Semua pilihan diambil langsung dari folder
+        <code>documents/templates</code>.
+      </small>
+
+      <!-- OTP -->
       <label for="otp">OTP</label>
-      <input id="otp" type="text" placeholder="Masukkan OTP 6 digit" />
+      <input
+        id="otp"
+        type="text"
+        placeholder="Masukkan OTP 6 digit"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+      />
 
-      <button id="btnSend">Kirim OTP</button>
-      <button id="btnVerify" style="margin-top: 10px;">Verifikasi & Masuk</button>
+      <!-- ACTIONS -->
+      <div class="actions">
+        <button id="btnSend">Kirim OTP</button>
+        <button id="btnVerify">Verifikasi &amp; Masuk</button>
+      </div>
 
-      <p class="note">Setelah verifikasi, user akan diarahkan otomatis ke dashboard sesuai role.</p>
+      <p class="note">
+        Setelah verifikasi, user diarahkan otomatis ke portal
+        sesuai role dan IPL yang dipilih.
+      </p>
     </div>
   </div>
 
