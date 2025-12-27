@@ -1,75 +1,91 @@
-:root {
-  --primary: #0a4fff;
-  --bg: #f4f6fa;
-  --card: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-header {
-  background: var(--primary);
-  color: white;
-  padding: 16px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-main {
-  max-width: 1100px;
-  margin: 32px auto;
-  padding: 0 16px;
-}
-
-.card {
-  background: var(--card);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.06);
-}
-
-h1,h2,h3 { margin-top: 0; }
-
-.badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.badge.final { background: #dcfce7; color: #166534; }
-.badge.draft { background: #fee2e2; color: #991b1b; }
-
-button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  cursor: pointer;
-}
-
-button.secondary {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-}
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/assets/css/app.css b/assets/css/app.css
+index 05490b13683b90d8094b282b84b201439bd5d6f9..880f48900ff6596b8bc7c86c44dd8ea2e724591d 100644
+--- a/assets/css/app.css
++++ b/assets/css/app.css
+@@ -51,25 +51,82 @@ h1,h2,h3 { margin-top: 0; }
+ 
+ button {
+   background: var(--primary);
+   color: white;
+   border: none;
+   border-radius: 8px;
+   padding: 10px 16px;
+   cursor: pointer;
+ }
+ 
+ button.secondary {
+   background: #e5e7eb;
+   color: #111827;
+ }
+ 
+ table {
+   width: 100%;
+   border-collapse: collapse;
+ }
+ 
+ th, td {
+   padding: 12px;
+   border-bottom: 1px solid #e5e7eb;
+   text-align: left;
+ }
++
++.eyebrow {
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
++  font-size: 12px;
++  color: var(--muted);
++  margin: 0 0 6px 0;
++}
++
++.muted { color: var(--muted); }
++
++.header-actions { display: flex; gap: 10px; align-items: center; }
++
++.grid { display: grid; gap: 16px; }
++.grid.two { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
++.grid.three { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
++
++.highlight { background: linear-gradient(135deg, #0a4fff, #3b82f6); color: white; }
++.highlight .muted { color: rgba(255,255,255,0.8); }
++
++.section-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
++
++.pill { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; background: #e5e7eb; color: #111827; margin-right: 6px; }
++.pill.sent { background: #dbeafe; color: #1d4ed8; }
++.pill.signed { background: #dcfce7; color: #166534; }
++.pill.rejected { background: #fee2e2; color: #991b1b; }
++.pill.draft { background: #fef9c3; color: #854d0e; }
++.pill.locked { background: #111827; color: #fff; }
++.pill.neutral { background: #e5e7eb; color: #111827; }
++.pill-group .pill { margin-bottom: 6px; }
++
++.badge.info { background: #e0f2fe; color: #075985; }
++.badge.locked { background: #0f172a; color: #fff; }
++
++.responsive-table { overflow-x: auto; }
++.actions { display: flex; flex-wrap: wrap; gap: 8px; }
++
++.doc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
++.doc-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #fff; }
++.doc-title { font-weight: 600; margin-bottom: 6px; }
++.doc-meta { margin-top: 10px; }
++.hash { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; color: #4b5563; }
++
++.signature-panel { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
++.signature-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
++.signature-actions { display: flex; gap: 8px; flex-wrap: wrap; }
++
++.checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
++.checklist li { padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
++
++iframe { width: 100%; height: 360px; border: 1px solid #e5e7eb; border-radius: 12px; background: white; }
++
++button.danger { background: #b91c1c; color: white; }
++button:disabled { opacity: 0.6; cursor: not-allowed; }
++
++input, textarea { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
++textarea { resize: vertical; }
+ 
+EOF
+)
