@@ -4,93 +4,79 @@
   <meta charset="UTF-8" />
   <title>Dashboard Mitra | Assistenku Legal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="/assets/css/app.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Guard Role -->
+  <script type="module">
+    import { requireRole } from "../shared/auth-guard.js";
+    requireRole("MITRA");
+  </script>
 </head>
+
 <body>
   <header>
     <div>
       <p class="eyebrow">Akses Mitra Kontraktual</p>
       <h1>Kendali SPL & Kinerja</h1>
-      <p class="muted">Isi kinerja harian, kirim bukti, dan pastikan status legal mengikuti lifecycle resmi.</p>
+      <p class="muted">
+        Isi kinerja harian, unggah bukti kerja, dan pastikan status legal mengikuti
+        lifecycle resmi.
+      </p>
     </div>
+
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
 
-  <main>
+  <main class="container">
+    <!-- RINGKASAN STATUS -->
     <section class="grid two">
       <article class="card highlight">
         <p class="eyebrow">SPL Aktif</p>
         <h2 id="activeSpl">-</h2>
-        <p class="muted">DRAFT → ACTIVE → FINAL → LOCKED</p>
+        <p class="muted">Lifecycle: DRAFT → ACTIVE → FINAL → LOCKED</p>
       </article>
+
       <article class="card">
-        <p class="eyebrow">Status TTD</p>
+        <p class="eyebrow">Status Tanda Tangan</p>
         <h2 id="signState">-</h2>
-        <p class="muted">PrivyID production dengan penandatangan Client & Mitra.</p>
+        <p class="muted">
+          PrivyID production dengan penandatangan Client & Mitra.
+        </p>
       </article>
     </section>
 
-    <section class="card">
-      <div class="section-header">
-        <div>
-          <p class="eyebrow">Kinerja Harian</p>
-          <h2>Isi Laporan & Upload Bukti</h2>
-          <p class="muted">Semua aktivitas dilog untuk audit. Status LOCKED menandakan data siap ke client.</p>
-        </div>
-        <div class="pill-group" id="statusLegend"></div>
-      </div>
-
-      <div class="grid two">
-        <div>
-          <label class="eyebrow" for="workDate">Tanggal</label>
-          <input id="workDate" type="date" />
-
-          <label class="eyebrow" for="description">Uraian Pekerjaan</label>
-          <textarea id="description" placeholder="Detail pekerjaan hari ini..." rows="4"></textarea>
-
-          <label class="eyebrow" for="evidence">Upload Bukti (opsional)</label>
-          <input id="evidence" type="file" accept="image/*,.pdf" />
-
-          <div class="actions">
-            <button id="btnSave">Simpan Draft</button>
-            <button id="btnLock" class="danger">Kirim ke Client (LOCK)</button>
+    <!-- KINERJA & DOKUMEN -->
+    <section class="grid two">
+      <article class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Kinerja Harian</p>
+            <h3>Lembar Kinerja</h3>
+            <p class="muted">
+              Data terkunci otomatis setelah submit (LOCKED_BY_SYSTEM).
+            </p>
           </div>
         </div>
+        <div id="kinerjaList" class="responsive-table"></div>
+      </article>
 
-        <div>
-          <h3>Status Terakhir</h3>
-          <p id="lastStatus" class="muted">Belum ada data.</p>
-          <div id="latestLog" class="doc-card"></div>
-          <button id="btnSign" class="secondary" style="margin-top: 10px;">Siapkan TTD PrivyID</button>
+      <article class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Dokumen Legal</p>
+            <h3>SPL & Perjanjian</h3>
+            <p class="muted">
+              Dokumen resmi yang terhubung dengan aktivitas mitra.
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="section-header">
-        <div>
-          <p class="eyebrow">Riwayat</p>
-          <h2>Audit Log Mitra</h2>
-        </div>
-        <button id="btnDownload" class="secondary">Unduh PDF Legal</button>
-      </div>
-
-      <div class="responsive-table">
-        <table id="logTable">
-          <thead>
-            <tr>
-              <th>Waktu</th>
-              <th>Aksi</th>
-              <th>Hash</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+        <div id="documentList" class="doc-grid"></div>
+      </article>
     </section>
   </main>
 
