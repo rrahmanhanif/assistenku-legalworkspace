@@ -1,167 +1,99 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/apps/mitra/index.html b/apps/mitra/index.html
-index 8eca4b8bb76a6e263b33260ef90e5c41b19635f1..01e7fb2864691924451433e5365378ee2708e502 100644
---- a/apps/mitra/index.html
-+++ b/apps/mitra/index.html
-@@ -1,73 +1,94 @@
- <!DOCTYPE html>
- <html lang="id">
- <head>
-   <meta charset="UTF-8" />
--  <title>Dashboard Mitra | Assistenku</title>
--  <link rel="stylesheet" href="style.css" />
-+  <title>Dashboard Mitra | Assistenku Legal</title>
-+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+  <link rel="stylesheet" href="/assets/css/app.css" />
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- </head>
- <body>
--
--<header>
--  <h1>Dashboard Mitra</h1>
--  <button id="logoutBtn">Logout</button>
--</header>
--
--<main>
--
--<section>
--  <h2>Absensi Hari Ini</h2>
--  <button id="btnCheckin">Check-in</button>
--</section>
--
--<section>
--  <h2>Kinerja Harian</h2>
--
--  <textarea id="description" placeholder="Uraikan pekerjaan hari ini..."></textarea>
--
--  <div class="actions">
--    <button id="btnSave">Simpan (Draft)</button>
--    <button id="btnLock">Kirim ke Client (LOCK)</button>
--  </div>
--
--</section>
--
--<section>
--  <h2>Status Terakhir</h2>
--  <p id="statusInfo">-</p>
--</section>
--  <link rel="stylesheet" href="/assets/css/app.css">
--
--<header>
--  <h1>Mitra Dashboard — Assistenku</h1>
--  <button id="logoutBtn">Logout</button>
--</header>
--
--<main>
--
--  <div class="card">
--    <h2>SPL Aktif</h2>
--    <div id="splList"></div>
--  </div>
--
--  <div class="card">
--    <h2>Kinerja Harian</h2>
--    <p>Isi absensi dan laporan sesuai SPL.</p>
--    <button onclick="openAttendance()">Isi Kinerja</button>
--  </div>
--
--</main>
--
--<script src="mitra.js"></script>
--
--
--
--</main>
--
--<script src="attendance.js"></script>
--<script src="worklog.js"></script>
--<script type="module" src="attendance.js"></script>
--<script type="module" src="worklog.js"></script>
--
-+  <header>
-+    <div>
-+      <p class="eyebrow">Akses Mitra Kontraktual</p>
-+      <h1>Kendali SPL & Kinerja</h1>
-+      <p class="muted">Isi kinerja harian, kirim bukti, dan pastikan status legal mengikuti lifecycle resmi.</p>
-+    </div>
-+    <div class="header-actions">
-+      <button id="btnRefresh" class="secondary">Segarkan Data</button>
-+      <button id="logoutBtn">Logout</button>
-+    </div>
-+  </header>
-+
-+  <main>
-+    <section class="grid two">
-+      <article class="card highlight">
-+        <p class="eyebrow">SPL Aktif</p>
-+        <h2 id="activeSpl">-</h2>
-+        <p class="muted">DRAFT → ACTIVE → FINAL → LOCKED</p>
-+      </article>
-+      <article class="card">
-+        <p class="eyebrow">Status TTD</p>
-+        <h2 id="signState">-</h2>
-+        <p class="muted">PrivyID production dengan penandatangan Client & Mitra.</p>
-+      </article>
-+    </section>
-+
-+    <section class="card">
-+      <div class="section-header">
-+        <div>
-+          <p class="eyebrow">Kinerja Harian</p>
-+          <h2>Isi Laporan & Upload Bukti</h2>
-+          <p class="muted">Semua aktivitas dilog untuk audit. Status LOCKED menandakan data siap ke client.</p>
-+        </div>
-+        <div class="pill-group" id="statusLegend"></div>
-+      </div>
-+
-+      <div class="grid two">
-+        <div>
-+          <label class="eyebrow" for="workDate">Tanggal</label>
-+          <input id="workDate" type="date" />
-+          <label class="eyebrow" for="description">Uraian Pekerjaan</label>
-+          <textarea id="description" placeholder="Detail pekerjaan hari ini..." rows="4"></textarea>
-+          <label class="eyebrow" for="evidence">Upload Bukti (opsional)</label>
-+          <input id="evidence" type="file" accept="image/*,.pdf" />
-+          <div class="actions">
-+            <button id="btnSave">Simpan Draft</button>
-+            <button id="btnLock" class="danger">Kirim ke Client (LOCK)</button>
-+          </div>
-+        </div>
-+        <div>
-+          <h3>Status Terakhir</h3>
-+          <p id="lastStatus" class="muted">Belum ada data.</p>
-+          <div id="latestLog" class="doc-card"></div>
-+          <button id="btnSign" class="secondary" style="margin-top: 10px;">Siapkan TTD PrivyID</button>
-+        </div>
-+      </div>
-+    </section>
-+
-+    <section class="card">
-+      <div class="section-header">
-+        <div>
-+          <p class="eyebrow">Riwayat</p>
-+          <h2>Audit Log Mitra</h2>
-+        </div>
-+        <button id="btnDownload" class="secondary">Unduh PDF Legal</button>
-+      </div>
-+      <div class="responsive-table">
-+        <table id="logTable">
-+          <thead>
-+            <tr>
-+              <th>Waktu</th>
-+              <th>Aksi</th>
-+              <th>Hash</th>
-+            </tr>
-+          </thead>
-+          <tbody></tbody>
-+        </table>
-+      </div>
-+    </section>
-+  </main>
-+
-+  <script type="module" src="/apps/mitra/mitra.js"></script>
- </body>
- </html>
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Mitra | Assistenku Legal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">Akses Mitra Kontraktual</p>
+      <h1>Kendali SPL & Kinerja</h1>
+      <p class="muted">Isi kinerja harian, kirim bukti, dan pastikan status legal mengikuti lifecycle resmi.</p>
+    </div>
+    <div class="header-actions">
+      <button id="btnRefresh" class="secondary">Segarkan Data</button>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid two">
+      <article class="card highlight">
+        <p class="eyebrow">SPL Aktif</p>
+        <h2 id="activeSpl">-</h2>
+        <p class="muted">DRAFT → ACTIVE → FINAL → LOCKED</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Status TTD</p>
+        <h2 id="signState">-</h2>
+        <p class="muted">PrivyID production dengan penandatangan Client & Mitra.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Kinerja Harian</p>
+          <h2>Isi Laporan & Upload Bukti</h2>
+          <p class="muted">Semua aktivitas dilog untuk audit. Status LOCKED menandakan data siap ke client.</p>
+        </div>
+        <div class="pill-group" id="statusLegend"></div>
+      </div>
+
+      <div class="grid two">
+        <div>
+          <label class="eyebrow" for="workDate">Tanggal</label>
+          <input id="workDate" type="date" />
+
+          <label class="eyebrow" for="description">Uraian Pekerjaan</label>
+          <textarea id="description" placeholder="Detail pekerjaan hari ini..." rows="4"></textarea>
+
+          <label class="eyebrow" for="evidence">Upload Bukti (opsional)</label>
+          <input id="evidence" type="file" accept="image/*,.pdf" />
+
+          <div class="actions">
+            <button id="btnSave">Simpan Draft</button>
+            <button id="btnLock" class="danger">Kirim ke Client (LOCK)</button>
+          </div>
+        </div>
+
+        <div>
+          <h3>Status Terakhir</h3>
+          <p id="lastStatus" class="muted">Belum ada data.</p>
+          <div id="latestLog" class="doc-card"></div>
+          <button id="btnSign" class="secondary" style="margin-top: 10px;">Siapkan TTD PrivyID</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Riwayat</p>
+          <h2>Audit Log Mitra</h2>
+        </div>
+        <button id="btnDownload" class="secondary">Unduh PDF Legal</button>
+      </div>
+
+      <div class="responsive-table">
+        <table id="logTable">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Aksi</th>
+              <th>Hash</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/mitra/mitra.js"></script>
+</body>
+</html>
