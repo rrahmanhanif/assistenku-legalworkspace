@@ -1,121 +1,266 @@
  (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
 diff --git a/apps/client/index.html b/apps/client/index.html
-index b22945313b0c7f35c42600c75aa9827f9991d77e..ec513bd56ebe88072c207d32fa970076c7b35efc 100644
+index 52787bff4d2a542164653aa6543707d47cf3e8fd..0edbe8a394e3d84e51d814288dcce55ea8c4d324 100644
 --- a/apps/client/index.html
 +++ b/apps/client/index.html
-@@ -1,99 +1,135 @@
- <!DOCTYPE html>
- <html lang="id">
- <head>
-   <meta charset="UTF-8" />
--  <title>Dashboard Client | Assistenku</title>
--  <meta name="viewport" content="width=device-width, initial-scale=1.0">
--  <link rel="stylesheet" href="/assets/css/app.css">
-+  <title>Dashboard Client | Assistenku Legal</title>
+@@ -1,233 +1,136 @@
+- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+-diff --git a/apps/client/index.html b/apps/client/index.html
+-index b22945313b0c7f35c42600c75aa9827f9991d77e..ec513bd56ebe88072c207d32fa970076c7b35efc 100644
+---- a/apps/client/index.html
+-+++ b/apps/client/index.html
+-@@ -1,99 +1,135 @@
+- <!DOCTYPE html>
+- <html lang="id">
+- <head>
+-   <meta charset="UTF-8" />
+--  <title>Dashboard Client | Assistenku</title>
+--  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+--  <link rel="stylesheet" href="/assets/css/app.css">
+-+  <title>Dashboard Client | Assistenku Legal</title>
+-+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-+  <link rel="stylesheet" href="/assets/css/app.css" />
+-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+- </head>
+--<script type="module">
+--import { requireRole } from "../shared/auth-guard.js";
+--await requireRole("CLIENT");
+--</script>
+--
+--<h1>Dashboard Client</h1>
+--<button onclick="location.href='/apps/client/spl.html'">Lihat SPL</button>
+--<button onclick="location.href='/apps/client/approval.html'">Approval & TTD</button>
+--<button onclick="location.href='/apps/client/documents.html'">Dokumen Legal</button>
+--
+- <body>
+--
+--<header class="topbar">
+--  <h1>Dashboard Client</h1>
+--  <button id="logoutBtn">Logout</button>
+--</header>
+--
+--<main class="container">
+--
+--  <h2>Pekerjaan Menunggu Persetujuan</h2>
+--
+--  <table id="workTable">
+--    <thead>
+--      <tr>
+--        <th>Tanggal</th>
+--        <th>Mitra</th>
+--        <th>Deskripsi</th>
+--        <th>Status</th>
+--        <th>Aksi</th>
+--      </tr>
+--    </thead>
+--    <tbody></tbody>
+--  </table>
+--
+--  
+--
+--  <section id="signatureSection" style="display:none;">
+--    <h3>Tanda Tangan Persetujuan</h3>
+--
+--    <p>
+--      Status Tanda Tangan:
+--      <strong id="signatureStatus">Digital (Internal)</strong>
+--    </p>
+--
+--    <canvas id="signatureCanvas" width="420" height="180"></canvas>
+--
+--    <div class="sign-actions">
+--      <button id="clearSign">Hapus</button>
+--      <button id="submitSign">Setujui & Tanda Tangani</button>
+-+  <header>
+-+    <div>
+-+      <p class="eyebrow">Akses Client</p>
+-+      <h1>Command Center Legal</h1>
+-+      <p class="muted">Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.</p>
+-     </div>
+--  </section>
+--<link rel="stylesheet" href="/assets/css/app.css">
+--
+--<header>
+--  <h1>Client Dashboard — Assistenku</h1>
+--  <button id="logoutBtn">Logout</button>
+--</header>
+--
+--<main>
+--
+--  <div class="card">
+--    <h2>Surat Perintah Layanan (SPL)</h2>
+--    <p class="muted">Dokumen legal yang menandai persetujuan pekerjaan.</p>
+--
+--    <table id="workTable">
+--      <thead>
+--        <tr>
+--          <th>Tanggal</th>
+--          <th>Mitra</th>
+--          <th>Status</th>
+--          <th>Aksi</th>
+--        </tr>
+--      </thead>
+--      <tbody></tbody>
+--    </table>
+--    <button onclick="finalizeSPL('{{spl_id}}')">
+--  Finalisasi SPL
+--</button>
+--
+--  </div>
+--
+--</main>
+--
+--<script src="dashboard.js"></script>
+--<script src="approve.js"></script>
+--<script src="signature.js"></script>
+--
+--
+-+    <div class="header-actions">
+-+      <button id="btnRefresh" class="secondary">Segarkan Data</button>
+-+      <button id="logoutBtn">Logout</button>
+-+    </div>
+-+  </header>
+-+
+-+  <main>
+-+    <section class="grid three">
+-+      <article class="card highlight">
+-+        <p class="eyebrow">Status SPL</p>
+-+        <h2 id="splStatus">-</h2>
+-+        <p class="muted">Lifecycle resmi: DRAFT → ACTIVE → FINAL → LOCKED (immutable)</p>
+-+      </article>
+-+      <article class="card">
+-+        <p class="eyebrow">PrivyID</p>
+-+        <h2 id="privyStatus">-</h2>
+-+        <p class="muted">Multi-signer Client & Mitra dengan webhook sent/signed/rejected</p>
+-+      </article>
+-+      <article class="card">
+-+        <p class="eyebrow">Audit & Hash</p>
+-+        <h2 id="hashInfo">-</h2>
+-+        <p class="muted">Dokumen dikunci SHA-256 + audit log tidak dapat dihapus</p>
+-+      </article>
+-+    </section>
+-+
+-+    <section class="card">
+-+      <div class="section-header">
+-+        <div>
+-+          <p class="eyebrow">SPL Aktif</p>
+-+          <h2>Surat Perintah Layanan</h2>
+-+          <p class="muted">Semua aktivitas legal terikat pada SPL/IPL resmi. Tindakan hanya aktif sesuai role.</p>
+-+        </div>
+-+        <div class="pill-group" id="splLegend"></div>
+-+      </div>
+-+
+-+      <div class="responsive-table">
+-+        <table id="splTable">
+-+          <thead>
+-+            <tr>
+-+              <th>No. SPL</th>
+-+              <th>Client</th>
+-+              <th>Mitra</th>
+-+              <th>Status</th>
+-+              <th>Dokumen</th>
+-+              <th>Aksi</th>
+-+            </tr>
+-+          </thead>
+-+          <tbody></tbody>
+-+        </table>
+-+      </div>
+-+    </section>
+-+
+-+    <section class="grid two">
+-+      <article class="card">
+-+        <div class="section-header">
+-+          <div>
+-+            <p class="eyebrow">Dokumen Legal</p>
+-+            <h3>HTML → PDF Legal Grade</h3>
+-+            <p class="muted">Dibuat otomatis, print-safe A4, tidak bisa diedit manual.</p>
+-+          </div>
+-+          <button id="btnGenerate" class="secondary">Generate PDF</button>
+-+        </div>
+-+        <div id="docList" class="doc-grid"></div>
+-+      </article>
+-+
+-+      <article class="card">
+-+        <div class="section-header">
+-+          <div>
+-+            <p class="eyebrow">Tanda Tangan</p>
+-+            <h3>PrivyID Production</h3>
+-+            <p class="muted">Pantau status sent/signed/rejected dan unduh PDF sah hukum.</p>
+-+          </div>
+-+          <button id="btnSendPrivy">Kirim ke PrivyID</button>
+-+        </div>
+-+        <div id="signaturePanel" class="signature-panel"></div>
+-+      </article>
+-+    </section>
+-+
+-+    <section class="card">
+-+      <div class="section-header">
+-+        <div>
+-+          <p class="eyebrow">Audit Trail</p>
+-+          <h2>Immutable Log</h2>
+-+          <p class="muted">Timestamp, actor, hash, dan action dicatat tanpa bisa dihapus.</p>
+-+        </div>
+-+        <button id="btnLock" class="danger">Kunci SPL (LOCKED)</button>
+-+      </div>
+-+      <div class="responsive-table">
+-+        <table id="auditTable">
+-+          <thead>
+-+            <tr>
+-+              <th>Waktu</th>
+-+              <th>Actor</th>
+-+              <th>Aksi</th>
+-+              <th>Hash</th>
+-+            </tr>
+-+          </thead>
+-+          <tbody></tbody>
+-+        </table>
+-+      </div>
+-+    </section>
+-+
+-+    <section class="grid two">
+-+      <article class="card">
+-+        <h3>Preview Dokumen</h3>
+-+        <p class="muted">Lihat render HTML print-safe sebelum dikirim ke PDF engine.</p>
+-+        <iframe id="docPreview" title="Preview Dokumen" src="/documents/spl.html"></iframe>
+-+      </article>
+-+
+-+      <article class="card">
+-+        <h3>Checklist Produksi</h3>
+-+        <ul class="checklist" id="checklist"></ul>
+-+      </article>
+-+    </section>
+-+  </main>
+-+
+-+  <script type="module" src="/apps/client/dashboard.js"></script>
+- </body>
+- </html>
+- 
+-EOF
+-)
++<!DOCTYPE html>
++<html lang="id">
++<head>
++  <meta charset="UTF-8" />
 +  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++  <title>Dashboard Client | Assistenku Legal</title>
 +  <link rel="stylesheet" href="/assets/css/app.css" />
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- </head>
--<script type="module">
--import { requireRole } from "../shared/auth-guard.js";
--await requireRole("CLIENT");
--</script>
--
--<h1>Dashboard Client</h1>
--<button onclick="location.href='/apps/client/spl.html'">Lihat SPL</button>
--<button onclick="location.href='/apps/client/approval.html'">Approval & TTD</button>
--<button onclick="location.href='/apps/client/documents.html'">Dokumen Legal</button>
--
- <body>
--
--<header class="topbar">
--  <h1>Dashboard Client</h1>
--  <button id="logoutBtn">Logout</button>
--</header>
--
--<main class="container">
--
--  <h2>Pekerjaan Menunggu Persetujuan</h2>
--
--  <table id="workTable">
--    <thead>
--      <tr>
--        <th>Tanggal</th>
--        <th>Mitra</th>
--        <th>Deskripsi</th>
--        <th>Status</th>
--        <th>Aksi</th>
--      </tr>
--    </thead>
--    <tbody></tbody>
--  </table>
--
--  
--
--  <section id="signatureSection" style="display:none;">
--    <h3>Tanda Tangan Persetujuan</h3>
--
--    <p>
--      Status Tanda Tangan:
--      <strong id="signatureStatus">Digital (Internal)</strong>
--    </p>
--
--    <canvas id="signatureCanvas" width="420" height="180"></canvas>
--
--    <div class="sign-actions">
--      <button id="clearSign">Hapus</button>
--      <button id="submitSign">Setujui & Tanda Tangani</button>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../shared/supabase.js"></script>
++</head>
++<body>
 +  <header>
 +    <div>
 +      <p class="eyebrow">Akses Client</p>
 +      <h1>Command Center Legal</h1>
 +      <p class="muted">Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.</p>
-     </div>
--  </section>
--<link rel="stylesheet" href="/assets/css/app.css">
--
--<header>
--  <h1>Client Dashboard — Assistenku</h1>
--  <button id="logoutBtn">Logout</button>
--</header>
--
--<main>
--
--  <div class="card">
--    <h2>Surat Perintah Layanan (SPL)</h2>
--    <p class="muted">Dokumen legal yang menandai persetujuan pekerjaan.</p>
--
--    <table id="workTable">
--      <thead>
--        <tr>
--          <th>Tanggal</th>
--          <th>Mitra</th>
--          <th>Status</th>
--          <th>Aksi</th>
--        </tr>
--      </thead>
--      <tbody></tbody>
--    </table>
--    <button onclick="finalizeSPL('{{spl_id}}')">
--  Finalisasi SPL
--</button>
--
--  </div>
--
--</main>
--
--<script src="dashboard.js"></script>
--<script src="approve.js"></script>
--<script src="signature.js"></script>
--
--
++    </div>
 +    <div class="header-actions">
 +      <button id="btnRefresh" class="secondary">Segarkan Data</button>
 +      <button id="logoutBtn">Logout</button>
 +    </div>
 +  </header>
 +
-+  <main>
++  <main class="container">
 +    <section class="grid three">
 +      <article class="card highlight">
 +        <p class="eyebrow">Status SPL</p>
@@ -226,8 +371,8 @@ index b22945313b0c7f35c42600c75aa9827f9991d77e..ec513bd56ebe88072c207d32fa970076
 +  </main>
 +
 +  <script type="module" src="/apps/client/dashboard.js"></script>
- </body>
- </html>
++</body>
++</html>
  
 EOF
 )
