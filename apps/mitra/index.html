@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Mitra | Assistenku</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header>
+  <h1>Dashboard Mitra</h1>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<main>
+
+<section>
+  <h2>Absensi Hari Ini</h2>
+  <button id="btnCheckin">Check-in</button>
+</section>
+
+<section>
+  <h2>Kinerja Harian</h2>
+
+  <textarea id="description" placeholder="Uraikan pekerjaan hari ini..."></textarea>
+
+  <div class="actions">
+    <button id="btnSave">Simpan (Draft)</button>
+    <button id="btnLock">Kirim ke Client (LOCK)</button>
+  </div>
+
+</section>
+
+<section>
+  <h2>Status Terakhir</h2>
+  <p id="statusInfo">-</p>
+</section>
+  <link rel="stylesheet" href="/assets/css/app.css">
+
+<header>
+  <h1>Mitra Dashboard — Assistenku</h1>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>SPL Aktif</h2>
+    <div id="splList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Kinerja Harian</h2>
+    <p>Isi absensi dan laporan sesuai SPL.</p>
+    <button onclick="openAttendance()">Isi Kinerja</button>
+  </div>
+
+</main>
+
+<script src="mitra.js"></script>
+
+
+
+</main>
+
+<script src="attendance.js"></script>
+<script src="worklog.js"></script>
+<script type="module" src="attendance.js"></script>
+<script type="module" src="worklog.js"></script>
+
+</body>
+</html>
