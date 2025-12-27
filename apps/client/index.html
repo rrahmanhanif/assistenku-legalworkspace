@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Client | Assistenku</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/assets/css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<script type="module">
+import { requireRole } from "../shared/auth-guard.js";
+await requireRole("CLIENT");
+</script>
+
+<h1>Dashboard Client</h1>
+<button onclick="location.href='/apps/client/spl.html'">Lihat SPL</button>
+<button onclick="location.href='/apps/client/approval.html'">Approval & TTD</button>
+<button onclick="location.href='/apps/client/documents.html'">Dokumen Legal</button>
+
+<body>
+
+<header class="topbar">
+  <h1>Dashboard Client</h1>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<main class="container">
+
+  <h2>Pekerjaan Menunggu Persetujuan</h2>
+
+  <table id="workTable">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Mitra</th>
+        <th>Deskripsi</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  
+
+  <section id="signatureSection" style="display:none;">
+    <h3>Tanda Tangan Persetujuan</h3>
+
+    <p>
+      Status Tanda Tangan:
+      <strong id="signatureStatus">Digital (Internal)</strong>
+    </p>
+
+    <canvas id="signatureCanvas" width="420" height="180"></canvas>
+
+    <div class="sign-actions">
+      <button id="clearSign">Hapus</button>
+      <button id="submitSign">Setujui & Tanda Tangani</button>
+    </div>
+  </section>
+<link rel="stylesheet" href="/assets/css/app.css">
+
+<header>
+  <h1>Client Dashboard — Assistenku</h1>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Surat Perintah Layanan (SPL)</h2>
+    <p class="muted">Dokumen legal yang menandai persetujuan pekerjaan.</p>
+
+    <table id="workTable">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Mitra</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="finalizeSPL('{{spl_id}}')">
+  Finalisasi SPL
+</button>
+
+  </div>
+
+</main>
+
+<script src="dashboard.js"></script>
+<script src="approve.js"></script>
+<script src="signature.js"></script>
+
+
+</body>
+</html>
