@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin | Assistenku Legal</title>
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { requireRole } from "../shared/auth-guard.js";
+    requireRole("ADMIN");
+  </script>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">Akses Admin</p>
+      <h1>Kontrol IPL, Mitra, dan Client</h1>
+      <p class="muted">
+        Pantau aktivitas berdasarkan IPL digital. Admin wajib login dengan dokumen IPL master.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button id="refreshBtn" class="secondary">Segarkan Data</button>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="grid three">
+      <article class="card highlight">
+        <p class="eyebrow">Verifikasi IPL</p>
+        <h2 id="iplInfo">-</h2>
+        <p class="muted">Admin hanya aktif bila membawa IPL master atau alur sistem.</p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">Portal Client</p>
+        <h2 id="clientCount">-</h2>
+        <p class="muted">Jumlah client terdaftar dengan IPL digital.</p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">Portal Mitra</p>
+        <h2 id="mitraCount">-</h2>
+        <p class="muted">Mitra aktif dengan lembar kinerja terkini.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Dokumen IPL Digital</p>
+          <h2>Akses langsung dari folder templates</h2>
+          <p class="muted">Gunakan untuk signup/signin dan audit role.</p>
+        </div>
+      </div>
+      <div id="templateList" class="doc-grid"></div>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Aktivitas Client</p>
+            <h3>IP / SPL terbaru</h3>
+            <p class="muted">Admin dapat membuka detail IPL/SPL untuk validasi.</p>
+          </div>
+        </div>
+        <div id="clientActivity" class="responsive-table"></div>
+      </article>
+
+      <article class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Kinerja Mitra</p>
+            <h3>Monitoring per dokumen</h3>
+            <p class="muted">
+              Daftar lembar kinerja dan perjanjian mitra yang diverifikasi.
+            </p>
+          </div>
+        </div>
+        <div id="mitraActivity" class="responsive-table"></div>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/admin/admin.js"></script>
+</body>
+</html>
