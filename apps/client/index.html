@@ -4,16 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Client | Assistenku Legal</title>
+
   <link rel="stylesheet" href="/assets/css/app.css" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="../shared/supabase.js"></script>
+  <script type="module">
+    import { requireRole } from "../shared/auth-guard.js";
+    requireRole("CLIENT");
+  </script>
 </head>
 <body>
   <header>
     <div>
       <p class="eyebrow">Akses Client</p>
       <h1>Command Center Legal</h1>
-      <p class="muted">Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.</p>
+      <p class="muted">
+        Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.
+      </p>
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
@@ -26,111 +34,45 @@
       <article class="card highlight">
         <p class="eyebrow">Status SPL</p>
         <h2 id="splStatus">-</h2>
-        <p class="muted">Lifecycle resmi: DRAFT → ACTIVE → FINAL → LOCKED (immutable)</p>
+        <p class="muted">
+          Lifecycle resmi: DRAFT → ACTIVE → FINAL → LOCKED (immutable)
+        </p>
       </article>
+
       <article class="card">
         <p class="eyebrow">PrivyID</p>
         <h2 id="privyStatus">-</h2>
-        <p class="muted">Multi-signer Client & Mitra dengan webhook sent/signed/rejected</p>
+        <p class="muted">
+          Multi-signer Client & Mitra dengan webhook sent / signed / rejected
+        </p>
       </article>
+
       <article class="card">
-        <p class="eyebrow">Audit & Hash</p>
-        <h2 id="hashInfo">-</h2>
-        <p class="muted">Dokumen dikunci SHA-256 + audit log tidak dapat dihapus</p>
+        <p class="eyebrow">Dokumen Legal</p>
+        <h2 id="docCount">-</h2>
+        <p class="muted">
+          Dokumen IPL, Addendum, dan SPL aktif
+        </p>
       </article>
     </section>
 
     <section class="card">
       <div class="section-header">
         <div>
-          <p class="eyebrow">SPL Aktif</p>
-          <h2>Surat Perintah Layanan</h2>
-          <p class="muted">Semua aktivitas legal terikat pada SPL/IPL resmi. Tindakan hanya aktif sesuai role.</p>
+          <p class="eyebrow">Dokumen & Aktivitas</p>
+          <h2>Ringkasan Legal Client</h2>
+          <p class="muted">
+            Semua perubahan tercatat dengan timestamp dan hash.
+          </p>
         </div>
-        <div class="pill-group" id="splLegend"></div>
       </div>
 
-      <div class="responsive-table">
-        <table id="splTable">
-          <thead>
-            <tr>
-              <th>No. SPL</th>
-              <th>Client</th>
-              <th>Mitra</th>
-              <th>Status</th>
-              <th>Dokumen</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="responsive-table" id="clientActivity">
+        <!-- diisi oleh client.js -->
       </div>
-    </section>
-
-    <section class="grid two">
-      <article class="card">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">Dokumen Legal</p>
-            <h3>HTML → PDF Legal Grade</h3>
-            <p class="muted">Dibuat otomatis, print-safe A4, tidak bisa diedit manual.</p>
-          </div>
-          <button id="btnGenerate" class="secondary">Generate PDF</button>
-        </div>
-        <div id="docList" class="doc-grid"></div>
-      </article>
-
-      <article class="card">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">Tanda Tangan</p>
-            <h3>PrivyID Production</h3>
-            <p class="muted">Pantau status sent/signed/rejected dan unduh PDF sah hukum.</p>
-          </div>
-          <button id="btnSendPrivy">Kirim ke PrivyID</button>
-        </div>
-        <div id="signaturePanel" class="signature-panel"></div>
-      </article>
-    </section>
-
-    <section class="card">
-      <div class="section-header">
-        <div>
-          <p class="eyebrow">Audit Trail</p>
-          <h2>Immutable Log</h2>
-          <p class="muted">Timestamp, actor, hash, dan action dicatat tanpa bisa dihapus.</p>
-        </div>
-        <button id="btnLock" class="danger">Kunci SPL (LOCKED)</button>
-      </div>
-      <div class="responsive-table">
-        <table id="auditTable">
-          <thead>
-            <tr>
-              <th>Waktu</th>
-              <th>Actor</th>
-              <th>Aksi</th>
-              <th>Hash</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="grid two">
-      <article class="card">
-        <h3>Preview Dokumen</h3>
-        <p class="muted">Lihat render HTML print-safe sebelum dikirim ke PDF engine.</p>
-        <iframe id="docPreview" title="Preview Dokumen" src="/documents/spl.html"></iframe>
-      </article>
-
-      <article class="card">
-        <h3>Checklist Produksi</h3>
-        <ul class="checklist" id="checklist"></ul>
-      </article>
     </section>
   </main>
 
-  <script type="module" src="/apps/client/dashboard.js"></script>
+  <script type="module" src="/apps/client/client.js"></script>
 </body>
 </html>
