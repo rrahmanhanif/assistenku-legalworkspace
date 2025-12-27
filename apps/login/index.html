@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Login Legal System | Assistenku</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+
+<h2>Login Sistem Legal Assistenku</h2>
+
+<h2>Akses Sistem</h2>
+<p>Akses hanya untuk pihak berwenang</p>
+
+<button class="btn" onclick="goLogin()">Login Sistem</button>
+<button class="btn" onclick="goClient()">Dashboard Client</button>
+<button class="btn" onclick="goMitra()">Dashboard Mitra</button>
+
+  
+  <script>
+async function afterLogin() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    alert('Login gagal');
+    return;
+  }
+
+  const role = user.user_metadata?.role;
+
+  if (role === 'CLIENT') {
+    window.location.href = '/apps/client/';
+    return;
+  }
+
+  if (role === 'MITRA') {
+    window.location.href = '/apps/mitra/';
+    return;
+  }
+
+  if (role === 'ADMIN') {
+    window.location.href = '/apps/dashboard/';
+    return;
+  }
+
+  alert('Role tidak dikenali. Hubungi admin.');
+}
+</script>
+
+</body>
+</html>
