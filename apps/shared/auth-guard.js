@@ -1,28 +1,49 @@
-<script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { supabase } from "./supabase.js";
 
-const supabase = createClient(
-  "https://vptfubypmfafrnmwweyj.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdGZ1YnlwbWZhZnJubXd3ZXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2NjI0OTMsImV4cCI6MjA3ODIzODQ5M30.DWe0Rr5zbWXK5_qUYMq2-vFcVk5JkDslXon5luWGzmw"
-);
+function redirectToLogin(role) {
+  const params = role ? `?role=${encodeURIComponent(role)}` : "";
+  window.location.href = `/apps/login/${params}`;
+}
+
+function getIplAccess() {
+  try {
+    return JSON.parse(localStorage.getItem("iplAccess") || "{}");
+  } catch (err) {
+    console.error("Tidak dapat membaca IPL access", err);
+    return {};
+  }
+}
 
 export async function requireRole(expectedRole) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    window.location.href = "/apps/login/";
+  // 1) Pastikan user sudah login (Supabase session ada)
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user) {
+    redirectToLogin(expectedRole);
     return;
   }
 
-  const { data, error } = await supabase
+  // 2) Pastikan role sesuai (server-side source of truth: tabel profiles)
+  const { data: profile, error: profileErr } = await supabase
     .from("profiles")
-    .select("role")
-    .eq("id", user.id)
+    .select("role, ipl_template")
+    .eq("id", userData.user.id)
     .single();
 
-  if (error || !data || data.role !== expectedRole) {
+  if (profileErr || !profile || profile.role !== expectedRole) {
     alert("Akses ditolak: role tidak sesuai");
     await supabase.auth.signOut();
-    window.location.href = "/apps/login/";
+    redirectToLogin(expectedRole);
+    return;
+  }
+
+  // 3) Pastikan local IPL access ada (verifikasi pilihan dokumen IPL)
+  const iplAccess = getIplAccess();
+  const sameRole = iplAccess?.role === expectedRole;
+  const hasTemplate = typeof iplAccess?.template === "string" && iplAccess.template.length > 0;
+
+  if (!sameRole || !hasTemplate) {
+    alert("Verifikasi IPL digital diperlukan ulang.");
+    await supabase.auth.signOut();
+    redirectToLogin(expectedRole);
   }
 }
-</script>
