@@ -1,243 +1,233 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/index.html b/index.html
-new file mode 100644
-index 0000000000000000000000000000000000000000..5949d39609d7302ac2057fec459f4e73fb052049
---- /dev/null
-+++ b/index.html
-@@ -0,0 +1,233 @@
-+<!DOCTYPE html>
-+<html lang="id">
-+<head>
-+  <meta charset="UTF-8" />
-+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+  <title>LegalWorkspace</title>
-+  <link rel="icon" type="image/png" href="assets/img/logo.png" />
-+  <link rel="stylesheet" href="assets/css/theme.css" />
-+  <style>
-+    :root {
-+      --primary: #0a58ff;
-+      --primary-dark: #0847cc;
-+      --bg: #f4f7fb;
-+      --card: #ffffff;
-+      --text: #1f2937;
-+      --muted: #6b7280;
-+    }
-+
-+    body {
-+      margin: 0;
-+      background: radial-gradient(circle at 20% 20%, rgba(10,88,255,0.08), transparent 28%),
-+                  radial-gradient(circle at 80% 10%, rgba(56,189,248,0.1), transparent 26%),
-+                  var(--bg);
-+      color: var(--text);
-+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-+      line-height: 1.6;
-+    }
-+
-+    header {
-+      max-width: 1100px;
-+      margin: 0 auto;
-+      padding: 32px 20px 12px 20px;
-+      display: flex;
-+      align-items: center;
-+      justify-content: space-between;
-+      gap: 16px;
-+    }
-+
-+    .brand {
-+      display: flex;
-+      align-items: center;
-+      gap: 12px;
-+      font-weight: 700;
-+      font-size: 18px;
-+      color: var(--text);
-+      text-decoration: none;
-+    }
-+
-+    .brand img {
-+      width: 42px;
-+      height: 42px;
-+      border-radius: 10px;
-+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-+    }
-+
-+    .domain-tag {
-+      background: #e0f2fe;
-+      color: #075985;
-+      padding: 10px 12px;
-+      border-radius: 10px;
-+      font-size: 14px;
-+      font-weight: 600;
-+      display: inline-flex;
-+      align-items: center;
-+      gap: 8px;
-+    }
-+
-+    main {
-+      max-width: 1100px;
-+      margin: 0 auto;
-+      padding: 16px 20px 60px 20px;
-+      display: grid;
-+      gap: 28px;
-+    }
-+
-+    .hero {
-+      background: linear-gradient(135deg, rgba(10,88,255,0.95), rgba(14,165,233,0.95));
-+      color: white;
-+      border-radius: 24px;
-+      padding: 32px;
-+      box-shadow: 0 16px 45px rgba(10,88,255,0.18);
-+      display: grid;
-+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-+      gap: 18px;
-+      position: relative;
-+      overflow: hidden;
-+    }
-+
-+    .hero::after {
-+      content: "";
-+      position: absolute;
-+      right: -40px;
-+      bottom: -40px;
-+      width: 220px;
-+      height: 220px;
-+      background: rgba(255,255,255,0.07);
-+      border-radius: 50%;
-+      filter: blur(2px);
-+    }
-+
-+    .hero h1 {
-+      margin: 0 0 10px 0;
-+      font-size: 32px;
-+      line-height: 1.2;
-+    }
-+
-+    .hero p { margin: 0 0 18px 0; color: rgba(255,255,255,0.85); }
-+
-+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
-+
-+    .btn-primary, .btn-secondary {
-+      display: inline-flex;
-+      align-items: center;
-+      gap: 8px;
-+      padding: 14px 16px;
-+      border-radius: 12px;
-+      text-decoration: none;
-+      font-weight: 700;
-+      transition: transform 120ms ease, box-shadow 120ms ease;
-+      border: none;
-+    }
-+
-+    .btn-primary {
-+      background: #fff;
-+      color: #0a58ff;
-+      box-shadow: 0 10px 30px rgba(255,255,255,0.25);
-+    }
-+
-+    .btn-secondary {
-+      background: rgba(255,255,255,0.12);
-+      color: #fff;
-+      border: 1px solid rgba(255,255,255,0.25);
-+    }
-+
-+    .btn-primary:hover, .btn-secondary:hover { transform: translateY(-1px); }
-+
-+    .grid {
-+      display: grid;
-+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-+      gap: 16px;
-+    }
-+
-+    .card {
-+      background: var(--card);
-+      border-radius: 16px;
-+      padding: 18px;
-+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-+      border: 1px solid #e5e7eb;
-+      display: grid;
-+      gap: 8px;
-+    }
-+
-+    .card h3 { margin: 0; font-size: 18px; }
-+    .card p { margin: 0; color: var(--muted); }
-+
-+    .pill {
-+      display: inline-block;
-+      padding: 6px 10px;
-+      border-radius: 999px;
-+      background: #e5e7eb;
-+      color: #111827;
-+      font-size: 12px;
-+      font-weight: 700;
-+    }
-+
-+    footer {
-+      max-width: 1100px;
-+      margin: 0 auto;
-+      padding: 0 20px 40px 20px;
-+      color: var(--muted);
-+      font-size: 14px;
-+    }
-+  </style>
-+</head>
-+<body>
-+  <header>
-+    <a href="#" class="brand">
-+      <img src="assets/img/logo.png" alt="LegalWorkspace" />
-+      <span>LegalWorkspace</span>
-+    </a>
-+    <span class="domain-tag">legalworkspace.assistenku.com siap diakses</span>
-+  </header>
-+
-+  <main>
-+    <section class="hero">
-+      <div>
-+        <p class="pill">Workspace</p>
-+        <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
-+        <p>Landing page ini siap dihubungkan ke domain <strong>legalworkspace.assistenku.com</strong>, sehingga semua user dapat langsung memilih portal yang dibutuhkan.</p>
-+        <div class="actions">
-+          <a class="btn-primary" href="apps/login/index.html">Masuk Dashboard</a>
-+          <a class="btn-secondary" href="apps/client/index.html">Portal Klien</a>
-+        </div>
-+      </div>
-+      <div>
-+        <div class="card" style="background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.2);">
-+          <p class="pill" style="background: rgba(255,255,255,0.14); color: #fff;">Status domain</p>
-+          <h3 style="margin: 0;">Siap di-deploy</h3>
-+          <p style="color: rgba(255,255,255,0.8); margin: 0;">Tempatkan berkas ini sebagai root sehingga domain dapat langsung mengarah ke halaman utama LegalWorkspace.</p>
-+        </div>
-+      </div>
-+    </section>
-+
-+    <section>
-+      <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-+        <h2 style="margin: 0;">Akses cepat</h2>
-+        <p style="margin: 0; color: var(--muted);">Pilih portal sesuai peran pengguna.</p>
-+      </div>
-+      <div class="grid">
-+        <div class="card">
-+          <h3>Dashboard Internal</h3>
-+          <p>Kelola dokumen, tandatangan, dan workflow internal tim.</p>
-+          <a class="btn-primary" href="apps/login/index.html">Buka Dashboard</a>
-+        </div>
-+        <div class="card">
-+          <h3>Portal Klien</h3>
-+          <p>Akses dokumen dan status penandatanganan dari sisi klien.</p>
-+          <a class="btn-secondary" href="apps/client/index.html" style="color: var(--primary); background: #eef2ff;">Masuk Portal Klien</a>
-+        </div>
-+        <div class="card">
-+          <h3>Portal Mitra</h3>
-+          <p>Absensi, worklog, dan alur kerja untuk mitra dan konsultan.</p>
-+          <a class="btn-secondary" href="apps/mitra/index.html" style="color: #0f172a; background: #fef3c7;">Buka Portal Mitra</a>
-+        </div>
-+      </div>
-+    </section>
-+  </main>
-+
-+  <footer>
-+    © 2024 LegalWorkspace. Hubungkan domain Anda ke root repo ini untuk pengalaman akses instan.
-+  </footer>
-+</body>
-+</html>
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LegalWorkspace</title>
+  <link rel="icon" type="image/png" href="assets/img/logo.png" />
+  <link rel="stylesheet" href="assets/css/theme.css" />
+  <style>
+    :root {
+      --primary: #0a58ff;
+      --primary-dark: #0847cc;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(10,88,255,0.08), transparent 28%),
+                  radial-gradient(circle at 80% 10%, rgba(56,189,248,0.1), transparent 26%),
+                  var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    .domain-tag {
+      background: #e0f2fe;
+      color: #075985;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 20px 60px 20px;
+      display: grid;
+      gap: 28px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(10,88,255,0.95), rgba(14,165,233,0.95));
+      color: white;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 16px 45px rgba(10,88,255,0.18);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      bottom: -40px;
+      width: 220px;
+      height: 220px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 50%;
+      filter: blur(2px);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px 0;
+      font-size: 32px;
+      line-height: 1.2;
+    }
+
+    .hero p { margin: 0 0 18px 0; color: rgba(255,255,255,0.85); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+    .btn-primary, .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: #0a58ff;
+      box-shadow: 0 10px 30px rgba(255,255,255,0.25);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    .btn-primary:hover, .btn-secondary:hover { transform: translateY(-1px); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+      border: 1px solid #e5e7eb;
+      display: grid;
+      gap: 8px;
+    }
+
+    .card h3 { margin: 0; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #111827;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 40px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="#" class="brand">
+      <img src="assets/img/logo.png" alt="LegalWorkspace" />
+      <span>LegalWorkspace</span>
+    </a>
+    <span class="domain-tag">legalworkspace.assistenku.com siap diakses</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="pill">Workspace</p>
+        <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
+        <p>Landing page ini siap dihubungkan ke domain <strong>legalworkspace.assistenku.com</strong>, sehingga semua user dapat langsung memilih portal yang dibutuhkan.</p>
+        <div class="actions">
+          <a class="btn-primary" href="apps/login/index.html">Masuk Dashboard</a>
+          <a class="btn-secondary" href="apps/client/index.html">Portal Klien</a>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.2);">
+          <p class="pill" style="background: rgba(255,255,255,0.14); color: #fff;">Status domain</p>
+          <h3 style="margin: 0;">Siap di-deploy</h3>
+          <p style="color: rgba(255,255,255,0.8); margin: 0;">Tempatkan berkas ini sebagai root sehingga domain dapat langsung mengarah ke halaman utama LegalWorkspace.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <h2 style="margin: 0;">Akses cepat</h2>
+        <p style="margin: 0; color: var(--muted);">Pilih portal sesuai peran pengguna.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3>Dashboard Internal</h3>
+          <p>Kelola dokumen, tandatangan, dan workflow internal tim.</p>
+          <a class="btn-primary" href="apps/login/index.html">Buka Dashboard</a>
+        </div>
+        <div class="card">
+          <h3>Portal Klien</h3>
+          <p>Akses dokumen dan status penandatanganan dari sisi klien.</p>
+          <a class="btn-secondary" href="apps/client/index.html" style="color: var(--primary); background: #eef2ff;">Masuk Portal Klien</a>
+        </div>
+        <div class="card">
+          <h3>Portal Mitra</h3>
+          <p>Absensi, worklog, dan alur kerja untuk mitra dan konsultan.</p>
+          <a class="btn-secondary" href="apps/mitra/index.html" style="color: #0f172a; background: #fef3c7;">Buka Portal Mitra</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2024 LegalWorkspace. Hubungkan domain Anda ke root repo ini untuk pengalaman akses instan.
+  </footer>
+</body>
+</html>
