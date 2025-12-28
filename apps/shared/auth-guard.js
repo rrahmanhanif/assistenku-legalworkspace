@@ -17,7 +17,6 @@ function getIplAccess() {
 }
 
 export async function requireRole(expectedRole) {
-  // 1) Pastikan user sudah login via Firebase
   const auth = getFirebaseAuth();
   const user = auth.currentUser;
 
@@ -26,7 +25,6 @@ export async function requireRole(expectedRole) {
     return;
   }
 
-  // 2) Validasi khusus ADMIN
   if (expectedRole === "ADMIN" && user.email !== ADMIN_EMAIL) {
     alert("Akun admin wajib menggunakan email resmi.");
     await signOutFirebase();
@@ -34,7 +32,6 @@ export async function requireRole(expectedRole) {
     return;
   }
 
-  // 3) Validasi akses dokumen dari localStorage
   const iplAccess = getIplAccess();
   const sameRole = iplAccess?.role === expectedRole;
 
