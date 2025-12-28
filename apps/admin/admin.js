@@ -1,10 +1,12 @@
 import {
   renderBlankTemplateList,
   requirePortalAccess,
-  downloadTemplateFile
+  downloadTemplateFile,
+  clearPortalSession
 } from "../shared/access.js";
 import { signOutFirebase } from "../shared/firebase.js";
 
+// 🔐 Guard ADMIN (async-safe)
 requirePortalAccess("ADMIN", "IPL");
 
 const docLegend = document.getElementById("docLegend");
@@ -12,6 +14,10 @@ const docTableBody = document.querySelector("#docTable tbody");
 const invoiceTableBody = document.querySelector("#invoiceTable tbody");
 const invoiceCount = document.getElementById("invoiceCount");
 const evidenceList = document.getElementById("evidenceList");
+
+/* =========================
+   MOCK DATA (sementara)
+========================= */
 
 const documents = [
   {
@@ -43,6 +49,10 @@ const evidences = [
   { id: "EV-001", ref: "SPL-2024-011", status: "LOCKED" }
 ];
 
+/* =========================
+   RENDER
+========================= */
+
 function renderLegend() {
   if (!docLegend) return;
   docLegend.innerHTML = `
@@ -55,6 +65,7 @@ function renderLegend() {
 function renderDocuments() {
   if (!docTableBody) return;
   docTableBody.innerHTML = "";
+
   documents.forEach((doc) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -65,4 +76,88 @@ function renderDocuments() {
       <td>${doc.hash}</td>
       <td>
         ${
-          doc
+          doc.canDownload
+            ? `<button class="secondary" data-action="open-template" data-template="${doc.document}">Unduh</button>`
+            : "-"
+        }
+      </td>
+    `;
+    docTableBody.appendChild(tr);
+  });
+}
+
+function renderInvoices() {
+  if (!invoiceTableBody) return;
+  invoiceTableBody.innerHTML = "";
+  invoiceCount.textContent = invoices.length;
+
+  invoices.forEach((inv) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${inv.id}</td>
+      <td>${inv.ref}</td>
+      <td>${inv.status}</td>
+      <td>
+        <button class="secondary" data-action="generate">Generate PDF</button>
+      </td>
+    `;
+    invoiceTableBody.appendChild(tr);
+  });
+}
+
+function renderEvidences() {
+  if (!evidenceList) return;
+  evidenceList.innerHTML = evidences
+    .map((e) => `<li>${e.id} — ${e.ref} — ${e.status}</li>`)
+    .join("");
+}
+
+/* =========================
+   EVENTS
+========================= */
+
+function attachEvents() {
+  document.body.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    if (action === "open-template") {
+      downloadTemplateFile(btn.dataset.template);
+    }
+
+    if (action === "generate") {
+      alert("Invoice siap diunduh sebagai PDF legal-grade.");
+    }
+  });
+
+  document.getElementById("btnRefresh")?.addEventListener("click", () => {
+    renderDocuments();
+    renderInvoices();
+    renderEvidences();
+  });
+
+  // 🔓 LOGOUT BERSIH
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    try {
+      await signOutFirebase();
+    } catch (err) {
+      console.warn("Firebase signOut gagal, lanjut logout", err);
+    } finally {
+      clearPortalSession();
+      window.location.href = "/";
+    }
+  });
+}
+
+/* =========================
+   INIT
+========================= */
+
+renderLegend();
+renderDocuments();
+renderInvoices();
+renderEvidences();
+renderBlankTemplateList(document.getElementById("templateDownloads"));
+attachEvents();
