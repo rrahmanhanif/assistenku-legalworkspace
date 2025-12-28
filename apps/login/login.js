@@ -1,11 +1,19 @@
-import { supabase } from "../shared/supabase.js";
+import {
+  completeEmailOtpSignIn,
+  hasEmailOtpLink,
+  sendEmailOtp
+} from "../shared/firebase.js";
 
 const emailInput = document.getElementById("email");
 const otpInput = document.getElementById("otp");
+const docNumberInput = document.getElementById("docNumber");
 const btnSend = document.getElementById("btnSend");
 const btnVerify = document.getElementById("btnVerify");
 const roleButtons = Array.from(document.querySelectorAll(".role-btn"));
 const iplSelect = document.getElementById("iplSelect");
+const docFields = document.getElementById("docFields");
+
+const ADMIN_EMAIL = "kontakassistenku@gmail.com";
 
 const templateOptions = {
   CLIENT: [
@@ -17,10 +25,7 @@ const templateOptions = {
     { value: "/documents/templates/04-perjanjian-mitra.html", label: "Perjanjian Mitra" },
     { value: "/documents/templates/06-lembar-kinerja.html", label: "Lembar Kinerja Mitra" }
   ],
-  ADMIN: [
-    { value: "/documents/templates/01-ipl.html", label: "IPL Master" },
-    { value: "/documents/templates/alur-sistem-assistenku.html", label: "Alur Sistem (Kontrol)" }
-  ]
+  ADMIN: []
 };
 
 let selectedRole = "CLIENT";
@@ -28,7 +33,7 @@ let selectedRole = "CLIENT";
 function renderTemplateOptions(role) {
   if (!iplSelect) return;
   iplSelect.innerHTML = "";
-  (templateOptions[role] || []).forEach((item) => {
+  (templateOptions[role] || []).forEach(item => {
     const option = document.createElement("option");
     option.value = item.value;
     option.textContent = item.label;
@@ -36,63 +41,117 @@ function renderTemplateOptions(role) {
   });
 }
 
-function setActiveRole(role) {
-  selectedRole = role;
-  roleButtons.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.role === role);
-  });
-  renderTemplateOptions(role);
+function toggleDocFields(role) {
+  const isAdmin = role === "ADMIN";
+  if (docFields) docFields.style.display = isAdmin ? "none" : "block";
+  if (isAdmin) {
+    if (iplSelect) iplSelect.value = "";
+    if (docNumberInput) docNumberInput.value = "";
+    if (emailInput && !emailInput.value) emailInput.value = ADMIN_EMAIL;
+  }
 }
 
-roleButtons.forEach((btn) => {
-  btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
-});
+function setActiveRole(role) {
+  selectedRole = role;
+  roleButtons.forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.role === role)
+  );
+  renderTemplateOptions(role);
+  toggleDocFields(role);
+}
 
-// Default role dari query param (?role=CLIENT|MITRA|ADMIN)
+roleButtons.forEach(btn =>
+  btn.addEventListener("click", () => setActiveRole(btn.dataset.role))
+);
+
 const params = new URLSearchParams(window.location.search);
 const defaultRole = params.get("role");
+const docFromLink = params.get("doc") || "";
+const templateFromLink = params.get("tpl") || "";
+
 if (defaultRole && templateOptions[defaultRole]) {
   setActiveRole(defaultRole);
 } else {
   renderTemplateOptions(selectedRole);
+  toggleDocFields(selectedRole);
+}
+
+if (templateFromLink && iplSelect) {
+  iplSelect.value = decodeURIComponent(templateFromLink);
+}
+if (docFromLink && docNumberInput) {
+  docNumberInput.value = decodeURIComponent(docFromLink);
 }
 
 async function validateIplTemplate(path) {
   const response = await fetch(path, { cache: "no-store" });
-  if (!response.ok) throw new Error("Dokumen IPL tidak dapat diakses");
-
+  if (!response.ok) throw new Error("Dokumen tidak dapat diakses");
   const text = await response.text();
-  if (!text || text.trim().length < 20) throw new Error("Konten IPL tidak valid");
-
+  if (!text || text.trim().length < 20) throw new Error("Konten dokumen tidak valid");
   return text.substring(0, 120);
+}
+
+function savePendingSession(payload) {
+  localStorage.setItem("lw_pending_login", JSON.stringify(payload));
+}
+
+function loadPendingSession() {
+  try {
+    return JSON.parse(localStorage.getItem("lw_pending_login"));
+  } catch {
+    return null;
+  }
+}
+
+function persistAccess({ role, template, docNumber, preview }) {
+  localStorage.setItem(
+    "iplAccess",
+    JSON.stringify({
+      role,
+      template: template || null,
+      documentId: docNumber || null,
+      preview: preview || null,
+      at: new Date().toISOString()
+    })
+  );
 }
 
 btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
   const templatePath = iplSelect?.value;
+  const docNumber = docNumberInput?.value.trim();
 
   if (!email) return alert("Email wajib diisi");
-  if (!templatePath) return alert("Pilih dokumen IPL terlebih dahulu");
 
-  try {
-    await validateIplTemplate(templatePath);
-  } catch (err) {
-    alert(err?.message || "Gagal memvalidasi dokumen IPL");
-    return;
+  if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
+    return alert(`Email admin wajib ${ADMIN_EMAIL}`);
   }
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: true,
-      data: { role: selectedRole, ipl_template: templatePath }
-    }
-  });
+  if (selectedRole !== "ADMIN") {
+    if (!templatePath) return alert("Pilih dokumen IPL/SPL");
+    if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
+  }
 
-  if (error) {
-    alert(error.message);
-  } else {
-    alert("OTP dikirim ke email. Cek inbox/spam. IPL digital direkam untuk verifikasi.");
+  try {
+    let preview;
+    if (selectedRole !== "ADMIN") {
+      preview = await validateIplTemplate(templatePath);
+    }
+
+    await sendEmailOtp(email, {
+      role: selectedRole,
+      docType: selectedRole === "MITRA" ? "SPL" : "IPL",
+      docNumber,
+      template: templatePath
+    });
+
+    savePendingSession({ role: selectedRole, template: templatePath, docNumber, preview });
+    localStorage.setItem("lw_last_email", email);
+
+    alert("OTP dikirim. Cek email dan buka tautan verifikasi.");
+  } catch (err) {
+    console.error(err);
+    alert(err?.message || "Gagal mengirim OTP");
   }
 });
 
@@ -100,51 +159,31 @@ btnVerify?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
   const token = otpInput?.value.trim();
   const templatePath = iplSelect?.value;
+  const docNumber = docNumberInput?.value.trim();
+  const pending = loadPendingSession();
 
-  if (!email || !token) return alert("Email dan OTP wajib diisi");
-  if (!templatePath) return alert("Pilih dokumen IPL terlebih dahulu");
+  if (!email) return alert("Email wajib diisi");
+
+  if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
+    return alert(`Email admin wajib ${ADMIN_EMAIL}`);
+  }
+
+  if (selectedRole !== "ADMIN") {
+    if (!templatePath) return alert("Pilih dokumen IPL/SPL");
+    if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
+  }
 
   try {
-    const preview = await validateIplTemplate(templatePath);
+    const preview = pending?.preview;
+    await completeEmailOtpSignIn(email, token);
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: "email"
+    persistAccess({
+      role: selectedRole,
+      template: templatePath,
+      docNumber,
+      preview
     });
-    if (error) throw error;
 
-    const user = data?.user;
-    if (!user) throw new Error("User tidak ditemukan");
-
-    // Simpan/selaraskan profil user di tabel profiles
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .upsert(
-        { id: user.id, role: selectedRole, ipl_template: templatePath },
-        { onConflict: "id" }
-      )
-      .select("role, ipl_template")
-      .single();
-
-    if (profileError) throw profileError;
-
-    if (!profile || profile.role !== selectedRole) {
-      throw new Error("Role tidak sesuai dengan pilihan portal");
-    }
-
-    // Simpan akses lokal agar portal dapat melakukan guard (requirePortalAccess)
-    localStorage.setItem(
-      "iplAccess",
-      JSON.stringify({
-        role: selectedRole,
-        template: templatePath,
-        preview,
-        at: new Date().toISOString()
-      })
-    );
-
-    // Redirect sesuai role
     if (selectedRole === "CLIENT") {
       window.location.href = "/apps/client/";
     } else if (selectedRole === "MITRA") {
@@ -152,10 +191,42 @@ btnVerify?.addEventListener("click", async () => {
     } else if (selectedRole === "ADMIN") {
       window.location.href = "/apps/admin/";
     } else {
-      alert("Role tidak dikenali. Hubungi admin.");
+      alert("Role tidak dikenali");
     }
   } catch (err) {
     console.error(err);
     alert(err?.message || "Gagal verifikasi OTP");
   }
 });
+
+(async function autoCompleteFromLink() {
+  try {
+    if (!hasEmailOtpLink()) return;
+    const stored = loadPendingSession();
+    const email =
+      localStorage.getItem("lw_last_email") || emailInput?.value.trim();
+    if (!email) return;
+
+    const role = stored?.role || selectedRole;
+    if (role === "ADMIN" && email !== ADMIN_EMAIL) return;
+
+    await completeEmailOtpSignIn(email);
+
+    persistAccess({
+      role,
+      template: stored?.template || iplSelect?.value,
+      docNumber: stored?.docNumber || docNumberInput?.value,
+      preview: stored?.preview
+    });
+
+    if (role === "CLIENT") {
+      window.location.href = "/apps/client/";
+    } else if (role === "MITRA") {
+      window.location.href = "/apps/mitra/";
+    } else if (role === "ADMIN") {
+      window.location.href = "/apps/admin/";
+    }
+  } catch (err) {
+    console.error("Auto sign-in gagal", err);
+  }
+})();
