@@ -11,13 +11,21 @@
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
+
+  <script type="module">
+    import { requireRole } from "../shared/auth-guard.js";
+    requireRole("ADMIN");
+  </script>
 </head>
+
 <body>
   <header>
     <div>
       <p class="eyebrow">Portal Admin</p>
-      <h1>Monitor Client & Mitra</h1>
-      <p class="muted">Akses berbasis IPL digital. Admin dapat memantau dokumen, kinerja mitra, serta membuat invoice.</p>
+      <h1>Monitor Client &amp; Mitra</h1>
+      <p class="muted">
+        Akses berbasis IPL digital. Admin dapat memantau dokumen, kinerja mitra, serta membuat invoice.
+      </p>
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
@@ -29,14 +37,79 @@
     <section class="grid three">
       <article class="card highlight">
         <p class="eyebrow">Kontrol Akses</p>
-        <h2>Client & Mitra Terproteksi</h2>
+        <h2>Client &amp; Mitra Terproteksi</h2>
         <p class="muted">Setiap portal wajib login menggunakan IPL/SPL digital resmi sebelum masuk.</p>
       </article>
 
       <article class="card">
         <p class="eyebrow">Invoice</p>
         <h2 id="invoiceCount">-</h2>
-        <p class="muted">Pembayaran ke mitra & penagihan ke client hanya aktif jika bukti kinerja ada.</p>
+        <p class="muted">Pembayaran ke mitra &amp; penagihan ke client hanya aktif jika bukti kinerja ada.</p>
       </article>
 
-      <!-- lanjutkan isi file Anda yang sudah ada di bawah sini -->
+      <article class="card">
+        <p class="eyebrow">Evidence</p>
+        <h2 id="evidenceCount">-</h2>
+        <p class="muted">Bukti kinerja harian wajib LOCKED sebelum invoice dapat dibuat.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3>Dokumen</h3>
+      <div id="docLegend" class="legend"></div>
+
+      <div class="responsive-table">
+        <table id="docTable">
+          <thead>
+            <tr>
+              <th>Tipe</th>
+              <th>Nomor</th>
+              <th>Pemilik</th>
+              <th>Status</th>
+              <th>Hash</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row-between">
+        <h3>Invoice</h3>
+        <button id="btnAddInvoice" class="secondary">Tambah Invoice</button>
+      </div>
+
+      <div class="responsive-table">
+        <table id="invoiceTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Referensi</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row-between">
+        <h3>Evidence</h3>
+        <button id="btnUploadEvidence" class="secondary">Unggah Evidence</button>
+      </div>
+      <ul id="evidenceList"></ul>
+    </section>
+
+    <section class="card">
+      <h3>Unduh Template Kosong</h3>
+      <div id="templateDownloads" class="doc-grid"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/admin/admin.js"></script>
+</body>
+</html>
