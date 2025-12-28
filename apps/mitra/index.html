@@ -7,14 +7,12 @@
 
   <link rel="stylesheet" href="/assets/css/app.css" />
 
-  <!-- Firebase -->
   <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 
-  <!-- Guard Role -->
   <script type="module">
     import { requireRole } from "../shared/auth-guard.js";
     requireRole("MITRA");
@@ -25,7 +23,7 @@
   <header>
     <div>
       <p class="eyebrow">Akses Mitra Kontraktual</p>
-      <h1>Kendali SPL & Kinerja</h1>
+      <h1>Kendali SPL &amp; Kinerja</h1>
       <p class="muted">
         Isi kinerja harian, unggah bukti kerja, dan pastikan status legal mengikuti
         lifecycle resmi.
@@ -80,14 +78,14 @@
     import { signOutFirebase } from "../shared/firebase.js";
 
     function attachEvents() {
-      document.getElementById("btnRefresh").onclick = () => {
+      document.getElementById("btnRefresh")?.addEventListener("click", () => {
         alert("Data kinerja disegarkan (placeholder).");
-      };
+      });
 
-      document.getElementById("logoutBtn").onclick = async () => {
+      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
         await signOutFirebase();
         window.location.href = "/";
-      };
+      });
     }
 
     attachEvents();
