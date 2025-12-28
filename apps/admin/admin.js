@@ -29,117 +29,118 @@ const documents = [
     owner: "CV Mitra Kontraktual",
     status: "FINAL",
     document: "03-spl.html",
-    hash: "bb2...c31",
+    hash: "bb2...cd3",
+    canDownload: true
+  },
+  {
+    type: "ADDENDUM",
+    number: "ADD-2024-005",
+    owner: "PT Alfa Energi (Client)",
+    status: "LOCKED",
+    document: "02-addendum-ipl-pt.html",
+    hash: "19ab...ff8",
+    canDownload: true
+  },
+  {
+    type: "NDA",
+    number: "NDA-2024-003",
+    owner: "CV Mitra Kontraktual",
+    status: "FINAL",
+    document: "05-nda-tata-tertib.html",
+    hash: "ad11...0f2",
     canDownload: true
   }
 ];
 
 const invoices = [
   {
-    id: "INV-2024-001",
+    number: "INV-2024-001",
     owner: "PT Alfa Energi",
+    period: "Nov 2024",
     status: "DRAFT",
-    total: 12500000,
-    document: "invoice-01.html",
-    hash: "1ab2...9dd"
+    amount: "Rp 12.500.000",
+    document: "invoice-sample.pdf"
   },
   {
-    id: "INV-2024-002",
+    number: "INV-2024-002",
     owner: "PT Alfa Energi",
+    period: "Des 2024",
     status: "FINAL",
-    total: 8400000,
-    document: "invoice-02.html",
-    hash: "2cd3...a01"
+    amount: "Rp 9.750.000",
+    document: "invoice-sample.pdf"
   }
 ];
 
 const evidences = [
   {
-    id: "EVD-2024-001",
-    spl: "SPL-2024-011",
-    submitter: "Mitra Kontraktual",
+    date: "2024-12-01",
+    mitra: "CV Mitra Kontraktual",
+    client: "PT Alfa Energi",
     status: "SUBMITTED",
-    files: ["evidence-01.jpg", "evidence-02.jpg"],
-    timestamp: "2024-08-12 18:11 WIB"
+    note: "Laporan kinerja harian + bukti foto"
+  },
+  {
+    date: "2024-12-02",
+    mitra: "CV Mitra Kontraktual",
+    client: "PT Alfa Energi",
+    status: "APPROVED",
+    note: "Disetujui client, siap invoice"
   }
 ];
 
 function renderLegend() {
   if (!docLegend) return;
+
   docLegend.innerHTML = `
-    <div class="legend">
-      <span class="chip chip-lock">LOCKED</span>
-      <span class="chip chip-final">FINAL</span>
-      <span class="chip chip-draft">DRAFT</span>
-      <span class="muted">Status legal-grade: LOCKED tidak dapat diubah, FINAL siap diekspor dan ditandatangani.</span>
-    </div>
+    <span class="badge badge-primary">FINAL</span>
+    <span class="badge badge-warning">LOCKED</span>
+    <span class="badge badge-muted">DRAFT</span>
   `;
 }
 
 function renderDocuments() {
   if (!docTableBody) return;
-  docTableBody.innerHTML = documents
-    .map((doc) => {
-      const badgeClass =
-        doc.status === "FINAL"
-          ? "chip chip-final"
-          : doc.status === "LOCKED"
-            ? "chip chip-lock"
-            : "chip chip-draft";
 
-      return `
-        <tr>
-          <td>${doc.type}</td>
-          <td><strong>${doc.number}</strong><br><span class="muted">${doc.owner}</span></td>
-          <td><span class="${badgeClass}">${doc.status}</span></td>
-          <td><span class="muted">${doc.hash}</span></td>
-          <td class="actions">
-            ${
-              doc.canDownload
-                ? `<button class="secondary" data-action="open-template" data-template="${doc.document}">Buka</button>`
-                : `<button class="secondary" disabled>Tidak tersedia</button>`
-            }
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
-}
-
-function formatRupiah(value) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
-  }).format(value);
+  docTableBody.innerHTML = "";
+  documents.forEach((doc) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><strong>${doc.type}</strong></td>
+      <td>${doc.number}</td>
+      <td>${doc.owner}</td>
+      <td><span class="status">${doc.status}</span></td>
+      <td class="mono">${doc.hash}</td>
+      <td>
+        ${
+          doc.canDownload
+            ? `<button class="btn btn-small" data-action="open-template" data-template="${doc.document}">Buka</button>`
+            : `<span class="muted">-</span>`
+        }
+      </td>
+    `;
+    docTableBody.appendChild(row);
+  });
 }
 
 function renderInvoices() {
   if (!invoiceTableBody) return;
-  invoiceTableBody.innerHTML = invoices
-    .map((inv) => {
-      const badgeClass =
-        inv.status === "FINAL"
-          ? "chip chip-final"
-          : inv.status === "LOCKED"
-            ? "chip chip-lock"
-            : "chip chip-draft";
 
-      return `
-        <tr>
-          <td><strong>${inv.id}</strong></td>
-          <td>${inv.owner}</td>
-          <td><span class="${badgeClass}">${inv.status}</span></td>
-          <td>${formatRupiah(inv.total)}</td>
-          <td><span class="muted">${inv.hash}</span></td>
-          <td class="actions">
-            <button class="secondary" data-action="open-template" data-template="${inv.document}">Buka</button>
-            <button class="primary" data-action="generate">Generate PDF</button>
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
+  invoiceTableBody.innerHTML = "";
+  invoices.forEach((inv) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><strong>${inv.number}</strong></td>
+      <td>${inv.owner}</td>
+      <td>${inv.period}</td>
+      <td><span class="status">${inv.status}</span></td>
+      <td>${inv.amount}</td>
+      <td>
+        <button class="btn btn-small" data-action="open-template" data-template="${inv.document}">Buka</button>
+        <button class="btn btn-small btn-primary" data-action="generate">Generate PDF</button>
+      </td>
+    `;
+    invoiceTableBody.appendChild(row);
+  });
 
   if (invoiceCount) invoiceCount.textContent = String(invoices.length);
 }
@@ -147,77 +148,58 @@ function renderInvoices() {
 function renderEvidences() {
   if (!evidenceList) return;
 
-  evidenceList.innerHTML = evidences
-    .map((ev) => {
-      return `
-        <div class="card">
-          <div class="row">
-            <div>
-              <div><strong>${ev.id}</strong> — ${ev.spl}</div>
-              <div class="muted">Pengirim: ${ev.submitter} • ${ev.timestamp} • Status: ${ev.status}</div>
-            </div>
-          </div>
-          <div class="files">
-            ${ev.files
-              .map((f) => `<span class="chip chip-draft">${f}</span>`)
-              .join("")}
-          </div>
-        </div>
-      `;
-    })
-    .join("");
+  evidenceList.innerHTML = "";
+  evidences.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "list-item";
+    li.innerHTML = `
+      <div class="list-title">${item.date} — ${item.mitra}</div>
+      <div class="list-subtitle">${item.client} • ${item.status}</div>
+      <div class="list-note">${item.note}</div>
+    `;
+    evidenceList.appendChild(li);
+  });
 }
 
 function attachEvents() {
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
+  document.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const action = btn.dataset.action;
 
-    const action = btn.dataset.action;
-    if (action === "open-template") {
-      downloadTemplateFile(btn.dataset.template);
-    }
-    if (action === "generate") {
-      alert("Invoice siap diunduh sebagai PDF legal-grade dengan data digital yang telah diisi.");
-      downloadTemplateFile(
-        btn
+      if (action === "open-template") {
+        downloadTemplateFile(btn.dataset.template);
+      }
+
+      if (action === "generate") {
+        alert("Invoice siap diunduh sebagai PDF legal-grade dengan data digital yang telah diisi.");
+        const openBtn = btn
           .closest("tr")
-          .querySelector("button[data-action='open-template']")
-          .dataset.template
-      );
-    }
+          ?.querySelector("button[data-action='open-template']");
+        if (openBtn?.dataset?.template) {
+          downloadTemplateFile(openBtn.dataset.template);
+        }
+      }
+    });
   });
 
-  const btnUploadEvidence = document.getElementById("btnUploadEvidence");
-  if (btnUploadEvidence) {
-    btnUploadEvidence.addEventListener("click", () => {
-      alert("Unggah bukti kinerja harian melalui form ini akan menandai data sebagai siap dibayar.");
-    });
-  }
+  document.getElementById("btnUploadEvidence")?.addEventListener("click", () => {
+    alert("Unggah bukti kinerja harian melalui form ini akan menandai data sebagai siap dibayar.");
+  });
 
-  const btnAddInvoice = document.getElementById("btnAddInvoice");
-  if (btnAddInvoice) {
-    btnAddInvoice.addEventListener("click", () => {
-      alert("Gunakan IPL/SPL digital yang telah terkunci sebelum membuat invoice baru.");
-    });
-  }
+  document.getElementById("btnAddInvoice")?.addEventListener("click", () => {
+    alert("Gunakan IPL/SPL digital yang telah terkunci sebelum membuat invoice baru.");
+  });
 
-  const btnRefresh = document.getElementById("btnRefresh");
-  if (btnRefresh) {
-    btnRefresh.addEventListener("click", () => {
-      renderDocuments();
-      renderInvoices();
-      renderEvidences();
-    });
-  }
+  document.getElementById("btnRefresh")?.addEventListener("click", () => {
+    renderDocuments();
+    renderInvoices();
+    renderEvidences();
+  });
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await signOutFirebase();
-      window.location.href = "/";
-    });
-  }
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    await signOutFirebase();
+    window.location.href = "/";
+  });
 }
 
 renderLegend();
