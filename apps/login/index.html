@@ -7,24 +7,26 @@
 
   <link rel="stylesheet" href="/apps/login/style.css" />
 
+  <!-- Firebase config (wajib ada di server) -->
   <script src="/assets/firebase-config.js"></script>
 
+  <!-- Base URL untuk callback email-link -->
   <script>
     window.LEGALWORKSPACE_BASE_URL = "https://legalworkspace.assistenku.com";
   </script>
 
+  <!-- Firebase Web SDK (CDN, ESM) -->
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 </head>
-
 <body>
   <div class="login-container">
     <div class="login-card">
       <h1>Assistenku Legal</h1>
       <p class="subtitle">
-        Masuk atau daftar menggunakan OTP berbasis IPL digital.
+        Masuk dengan tautan email berbasis dokumen IPL/SPL digital tanpa memasukkan OTP manual.
       </p>
 
       <!-- ROLE SWITCHER -->
@@ -53,7 +55,7 @@
         autocomplete="email"
       />
 
-      <!-- IPL/SPL SELECT + DOC NUMBER -->
+      <!-- DOC FIELDS -->
       <div id="docFields">
         <label for="iplSelect">Dokumen IPL / SPL Digital</label>
         <select id="iplSelect"></select>
@@ -71,25 +73,14 @@
         />
       </div>
 
-      <!-- OTP -->
-      <label for="otp">OTP</label>
-      <input
-        id="otp"
-        type="text"
-        placeholder="Masukkan OTP 6 digit"
-        inputmode="numeric"
-        autocomplete="one-time-code"
-      />
-
       <!-- ACTIONS -->
       <div class="actions">
-        <button id="btnSend">Kirim OTP</button>
-        <button id="btnVerify">Verifikasi &amp; Masuk</button>
+        <button id="btnSend">Kirim Tautan Masuk</button>
       </div>
 
       <p class="note">
-        Setelah verifikasi, user diarahkan otomatis ke portal
-        sesuai role dan IPL yang dipilih.
+        Setelah membuka tautan email, Anda akan diarahkan otomatis ke portal
+        sesuai role dan nomor dokumen yang dipilih.
       </p>
     </div>
   </div>
