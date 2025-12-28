@@ -10,7 +10,7 @@ const sampleSpls = [
     documents: ["Perjanjian Induk Layanan", "SPL", "NDA", "Quotation"],
     hash: "3ac4...9f1a",
     privy: { status: "sent", actors: ["Client", "Mitra"] },
-    updated_at: "2024-09-01 10:22"
+    updated_at: "2024-09-01 10:22",
   },
   {
     id: "SPL-2024-002",
@@ -20,8 +20,8 @@ const sampleSpls = [
     documents: ["Perjanjian Kemitraan", "Addendum IPL"],
     hash: "-",
     privy: { status: "draft", actors: ["Client"] },
-    updated_at: "2024-09-01 09:10"
-  }
+    updated_at: "2024-09-01 09:10",
+  },
 ];
 
 const documentPipeline = [
@@ -29,7 +29,7 @@ const documentPipeline = [
   { step: "Review", status: "done" },
   { step: "Approval", status: "active" },
   { step: "PrivyID", status: "pending" },
-  { step: "Final PDF", status: "pending" }
+  { step: "Final PDF", status: "pending" },
 ];
 
 function hydrate() {
@@ -53,6 +53,7 @@ function attachEvents() {
   document.getElementById("signaturePanel")?.addEventListener("click", (event) => {
     const button = event.target.closest("button");
     if (!button) return;
+
     const action = button.dataset.action;
     if (action === "remind") {
       alert("Reminder penandatanganan dikirim ke semua penandatangan.");
