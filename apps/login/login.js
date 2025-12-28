@@ -5,10 +5,8 @@ import {
 } from "../shared/firebase.js";
 
 const emailInput = document.getElementById("email");
-const otpInput = document.getElementById("otp");
 const docNumberInput = document.getElementById("docNumber");
 const btnSend = document.getElementById("btnSend");
-const btnVerify = document.getElementById("btnVerify");
 const roleButtons = Array.from(document.querySelectorAll(".role-btn"));
 const iplSelect = document.getElementById("iplSelect");
 const docFields = document.getElementById("docFields");
@@ -121,26 +119,53 @@ function loadPendingSession() {
   }
 }
 
-function persistAccess({ role, template, docNumber, preview }) {
+/**
+ * Simpan sesi portal yang dipakai access.js (lw_portal_session).
+ * Ini yang akan dibaca requirePortalAccess().
+ */
+function savePortalSession({ role, docType, templateFile, documentId, preview }) {
+  const payload = {
+    role,
+    docType,
+    templateFile: templateFile || null,
+    documentId: documentId || null,
+    preview: preview || null,
+    timestamp: Date.now()
+  };
+  localStorage.setItem("lw_portal_session", JSON.stringify(payload));
+
+  // Backward-compatibility: kalau ada modul lain yang masih baca iplAccess
   localStorage.setItem(
     "iplAccess",
     JSON.stringify({
       role,
-      template: template || null,
-      documentId: docNumber || null,
+      template: templateFile || null,
+      documentId: documentId || null,
       preview: preview || null,
       at: new Date().toISOString()
     })
   );
 }
 
+function redirectByRole(role) {
+  if (role === "CLIENT") {
+    window.location.href = "/apps/client/";
+  } else if (role === "MITRA") {
+    window.location.href = "/apps/mitra/";
+  } else if (role === "ADMIN") {
+    window.location.href = "/apps/admin/";
+  } else {
+    alert("Role tidak dikenali. Hubungi admin.");
+  }
+}
+
 /* =========================
-   SEND OTP
+   SEND MAGIC LINK (EMAIL ONLY)
 ========================= */
 
 btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
-  const templatePath = iplSelect?.value;
+  const templatePath = iplSelect?.value; // path penuh
   const docNumber = docNumberInput?.value.trim();
 
   if (!email) return alert("Email wajib diisi");
@@ -160,100 +185,76 @@ btnSend?.addEventListener("click", async () => {
       preview = await validateIplTemplate(templatePath);
     }
 
+    // docType yang Anda pakai sebelumnya
+    const docType = selectedRole === "MITRA" ? "SPL" : "IPL";
+
     await sendEmailOtp(email, {
       role: selectedRole,
-      docType: selectedRole === "MITRA" ? "SPL" : "IPL",
+      docType,
       docNumber,
       template: templatePath
     });
 
-    savePendingSession({ role: selectedRole, template: templatePath, docNumber, preview });
+    // Simpan pending agar saat balik dari email link bisa auto-complete
+    savePendingSession({
+      role: selectedRole,
+      docType,
+      template: templatePath,
+      docNumber,
+      preview
+    });
+
     localStorage.setItem("lw_last_email", email);
 
-    alert("OTP dikirim via Firebase. Cek inbox/spam dan buka tautannya.");
+    alert("Link login dikirim via Firebase. Cek inbox/spam dan buka tautannya.");
   } catch (err) {
     console.error(err);
-    alert(err?.message || "Gagal mengirim OTP");
+    alert(err?.message || "Gagal mengirim link login");
   }
 });
 
 /* =========================
-   VERIFY OTP (MANUAL)
-========================= */
-
-btnVerify?.addEventListener("click", async () => {
-  const email = emailInput?.value.trim();
-  const token = otpInput?.value.trim();
-  const templatePath = iplSelect?.value;
-  const docNumber = docNumberInput?.value.trim();
-  const pending = loadPendingSession();
-
-  if (!email) return alert("Email wajib diisi");
-
-  if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
-    return alert(`Email admin wajib ${ADMIN_EMAIL}`);
-  }
-
-  if (selectedRole !== "ADMIN") {
-    if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
-    if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
-  }
-
-  try {
-    const preview = pending?.preview || null;
-    await completeEmailOtpSignIn(email, token);
-
-    persistAccess({ role: selectedRole, template: templatePath, docNumber, preview });
-
-    redirectByRole(selectedRole);
-  } catch (err) {
-    console.error(err);
-    alert(err?.message || "Gagal verifikasi OTP");
-  }
-});
-
-/* =========================
-   AUTO SIGN-IN VIA LINK
+   AUTO SIGN-IN VIA EMAIL LINK
 ========================= */
 
 (async function autoCompleteFromLink() {
   try {
-    if (!(await hasEmailOtpLink())) return;
+    const isLink = await hasEmailOtpLink();
+    if (!isLink) return;
 
     const stored = loadPendingSession();
     const email = localStorage.getItem("lw_last_email") || emailInput?.value.trim();
-    if (!email) return;
+
+    if (!email) {
+      alert("Email tidak ditemukan. Isi email yang sama seperti saat meminta link login.");
+      return;
+    }
 
     const role = stored?.role || selectedRole;
-    if (role === "ADMIN" && email !== ADMIN_EMAIL) return;
+    if (role === "ADMIN" && email !== ADMIN_EMAIL) {
+      alert(`Email admin wajib ${ADMIN_EMAIL}`);
+      return;
+    }
 
+    // Ini yang menetapkan session Firebase
     await completeEmailOtpSignIn(email);
 
-    persistAccess({
+    const docType = stored?.docType || (role === "MITRA" ? "SPL" : "IPL");
+    const templateFile = stored?.template || iplSelect?.value || null;
+    const documentId = stored?.docNumber || docNumberInput?.value || null;
+
+    // Simpan sesi agar portal guard tidak menendang balik
+    savePortalSession({
       role,
-      template: stored?.template || iplSelect?.value,
-      docNumber: stored?.docNumber || docNumberInput?.value,
-      preview: stored?.preview
+      docType,
+      templateFile,
+      documentId,
+      preview: stored?.preview || null
     });
 
     redirectByRole(role);
   } catch (err) {
     console.error("Auto sign-in gagal", err);
+    alert(err?.message || "Auto sign-in gagal. Silakan kirim link login lagi.");
   }
 })();
-
-/* =========================
-   REDIRECT
-========================= */
-
-function redirectByRole(role) {
-  if (role === "CLIENT") {
-    window.location.href = "/apps/client/";
-  } else if (role === "MITRA") {
-    window.location.href = "/apps/mitra/";
-  } else if (role === "ADMIN") {
-    window.location.href = "/apps/admin/";
-  } else {
-    alert("Role tidak dikenali. Hubungi admin.");
-  }
-}
