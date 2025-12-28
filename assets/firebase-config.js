@@ -1,9 +1,3 @@
-/**
- * Firebase Production Configuration
- * Digunakan oleh seluruh aplikasi Assistenku (Login, Client, Mitra, Admin)
- * Loaded secara global sebelum Firebase SDK dipanggil.
- */
-
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBSL87qkuwSQU8aXvLuu24nV7jUoX2mOSA",
   authDomain: "assistenku-8ef85.firebaseapp.com",
