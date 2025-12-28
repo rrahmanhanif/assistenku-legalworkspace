@@ -2,153 +2,160 @@ import {
   bindTemplateOptions,
   downloadTemplateFile,
   fetchProfileRole,
-  requiredDocType,
   savePortalSession
 } from "./access.js";
-
-import {
-  completeEmailOtpSignIn,
-  sendEmailOtp,
-  hasEmailOtpLink
-} from "./firebase.js";
+import { completeEmailOtpSignIn, sendEmailOtp, hasEmailOtpLink } from "./firebase.js";
 
 const ADMIN_EMAIL = "kontakassistenku@gmail.com";
 
+// Fallback jika access.js belum export requiredDocType.
+// Idealnya: export requiredDocType di access.js dan hapus fallback ini.
+const REQUIRED_DOC_TYPE_FALLBACK = {
+  CLIENT: "IPL",
+  ADMIN: "IPL",
+  MITRA: "SPL"
+};
+
 export function initPortalAuth({ role, docType, redirect }) {
   const emailInput = document.querySelector("[data-email]");
-  const otpInput = document.querySelector("[data-otp]");
   const docSelect = document.querySelector("[data-template]");
   const docIdInput = document.querySelector("[data-doc-id]");
   const sendBtn = document.querySelector("[data-action='send-otp']");
-  const verifyBtn = document.querySelector("[data-action='verify']");
   const downloadBtn = document.querySelector("[data-action='download-template']");
 
-  const requiredType = docType || requiredDocType[role];
+  const requiredType = docType || REQUIRED_DOC_TYPE_FALLBACK[role];
 
-  // Populate template dropdown
-  bindTemplateOptions(docSelect, requiredType);
+  // Bind template options hanya jika non-admin (admin tidak butuh template)
+  if (docSelect && role !== "ADMIN") {
+    bindTemplateOptions(docSelect, requiredType);
+  }
+
+  // Prefill dari sesi sebelumnya
+  const saved = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("lw_portal_session"));
+    } catch {
+      return null;
+    }
+  })();
+
+  if (saved?.documentId && docIdInput && !docIdInput.value) docIdInput.value = saved.documentId;
+  if (saved?.templateFile && docSelect && !docSelect.value) docSelect.value = saved.templateFile;
 
   downloadBtn?.addEventListener("click", () => {
-    if (!docSelect?.value) return;
-    downloadTemplateFile(docSelect.value);
+    // Admin tidak wajib template; jika kosong, jangan lanjut.
+    const file = docSelect?.value;
+    if (!file) {
+      alert("Template tidak tersedia untuk diunduh pada portal ini.");
+      return;
+    }
+    downloadTemplateFile(file);
   });
 
-  /* =========================
-     SEND OTP
-  ========================= */
-
   sendBtn?.addEventListener("click", async () => {
-    const email = emailInput?.value.trim();
-    const documentId = docIdInput?.value.trim();
+    const email = (emailInput?.value || "").trim();
+    const documentId = (docIdInput?.value || "").trim();
+    const templateFile = (docSelect?.value || "").trim();
 
     if (!email) {
       alert("Email wajib diisi.");
       return;
     }
 
-    if (role === "ADMIN" && email !== ADMIN_EMAIL) {
-      alert(`Email admin wajib ${ADMIN_EMAIL}`);
-      return;
-    }
-
-    if (role !== "ADMIN" && !documentId) {
-      alert("Nomor IPL/SPL wajib diisi.");
-      return;
+    if (role === "ADMIN") {
+      if (email !== ADMIN_EMAIL) {
+        alert(`Email admin wajib ${ADMIN_EMAIL}`);
+        return;
+      }
+    } else {
+      if (!documentId) {
+        alert("Nomor IPL/SPL wajib diisi.");
+        return;
+      }
+      if (!templateFile) {
+        alert("Pilih dokumen digital terlebih dahulu.");
+        return;
+      }
     }
 
     try {
       await sendEmailOtp(email, {
         role,
-        docType: requiredType,
-        docNumber: documentId,
-        template: docSelect?.value
+        docType: role === "ADMIN" ? null : requiredType,
+        docNumber: role === "ADMIN" ? null : documentId,
+        template: role === "ADMIN" ? null : templateFile
       });
 
+      // Simpan sesi portal agar guard konsisten
       savePortalSession({
         role,
-        docType: requiredType,
-        templateFile: docSelect?.value,
-        documentId
+        docType: role === "ADMIN" ? requiredType : requiredType,
+        templateFile: role === "ADMIN" ? null : templateFile,
+        documentId: role === "ADMIN" ? null : documentId
       });
 
-      alert("OTP dikirim via Firebase. Cek inbox/spam lalu klik tautan email.");
+      alert("Tautan masuk dikirim via email. Buka email untuk menyelesaikan login.");
     } catch (err) {
       console.error(err);
-      alert(err?.message || "Gagal mengirim OTP.");
+      alert(err?.message || "Gagal mengirim tautan masuk");
     }
   });
 
-  /* =========================
-     VERIFY / COMPLETE SIGN-IN
-  ========================= */
-
   async function completeSignIn() {
-    const email = emailInput?.value.trim();
-    const token = otpInput?.value.trim();
-    const documentId = docIdInput?.value.trim();
+    const email = (emailInput?.value || "").trim();
+    const documentId = (docIdInput?.value || "").trim();
+    const templateFile = (docSelect?.value || "").trim();
 
     if (!email) {
       alert("Email wajib diisi.");
       return;
     }
-
     if (role === "ADMIN" && email !== ADMIN_EMAIL) {
       alert(`Email admin wajib ${ADMIN_EMAIL}`);
       return;
     }
+    if (role !== "ADMIN") {
+      if (!documentId) {
+        alert("Nomor IPL/SPL wajib diisi.");
+        return;
+      }
+      if (!templateFile) {
+        alert("Pilih dokumen digital terlebih dahulu.");
+        return;
+      }
+    }
 
-    if (role !== "ADMIN" && !documentId) {
-      alert("Nomor IPL/SPL wajib diisi.");
+    await completeEmailOtpSignIn(email);
+
+    savePortalSession({
+      role,
+      docType: requiredType,
+      templateFile: role === "ADMIN" ? null : templateFile,
+      documentId: role === "ADMIN" ? null : documentId
+    });
+
+    const profileRole = await fetchProfileRole();
+    if (profileRole && profileRole !== role) {
+      alert(`Role yang terdaftar adalah ${profileRole}. Portal ini khusus ${role}.`);
       return;
     }
 
-    try {
-      await completeEmailOtpSignIn(email, token);
-
-      savePortalSession({
-        role,
-        docType: requiredType,
-        templateFile: docSelect?.value,
-        documentId
-      });
-
-      const profileRole = await fetchProfileRole();
-      if (profileRole && profileRole !== role) {
-        alert(`Role yang terdaftar adalah ${profileRole}. Portal ini khusus ${role}.`);
-        return;
-      }
-
-      const target = redirect || "../";
-      window.location.href = target;
-    } catch (err) {
-      console.error(err);
-      alert(err?.message || "Gagal verifikasi OTP.");
-    }
+    window.location.href = redirect || "../";
   }
 
-  verifyBtn?.addEventListener("click", completeSignIn);
-
-  /* =========================
-     AUTO COMPLETE FROM EMAIL LINK
-  ========================= */
-
-  (async function autoCompleteFromEmailLink() {
+  (async function autoComplete() {
     try {
       if (!(await hasEmailOtpLink())) return;
 
-      const email =
-        emailInput?.value.trim() ||
-        localStorage.getItem("lw_last_email");
-
+      const email = (emailInput?.value || "").trim() || localStorage.getItem("lw_last_email");
       if (!email) return;
 
-      if (!emailInput.value) {
-        emailInput.value = email;
-      }
+      if (emailInput && !emailInput.value) emailInput.value = email;
 
       await completeSignIn();
     } catch (err) {
-      console.error("Auto sign-in gagal", err);
+      console.error("Auto complete sign-in gagal", err);
+      // Jangan alert agresif agar tidak ganggu UX; user bisa klik ulang dari email.
     }
   })();
 }
