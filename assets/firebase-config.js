@@ -1,5 +1,8 @@
-// Konfigurasi Firebase Produksi
-// Digunakan oleh seluruh aplikasi (Login, Client, Mitra, Admin)
+/**
+ * Firebase Production Configuration
+ * Digunakan oleh seluruh aplikasi Assistenku (Login, Client, Mitra, Admin)
+ * Loaded secara global sebelum Firebase SDK dipanggil.
+ */
 
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBSL87qkuwSQU8aXvLuu24nV7jUoX2mOSA",
