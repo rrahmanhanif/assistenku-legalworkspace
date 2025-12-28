@@ -1,5 +1,12 @@
-import { supabase } from "../shared/supabase.js";
+import { requirePortalAccess, clearPortalSession } from "../shared/access.js";
 import { signOutFirebase } from "../shared/firebase.js";
+
+// 🔐 Guard CLIENT
+requirePortalAccess("CLIENT", "IPL");
+
+/* =========================
+   MOCK DATA
+========================= */
 
 const sampleSpls = [
   {
@@ -9,19 +16,8 @@ const sampleSpls = [
     status: "FINAL",
     documents: ["Perjanjian Induk Layanan", "SPL", "NDA", "Quotation"],
     hash: "3ac4...9f1a",
-    privy: { status: "sent", actors: ["Client", "Mitra"] },
-    updated_at: "2024-09-01 10:22",
-  },
-  {
-    id: "SPL-2024-002",
-    client: "PT Beta Logistik",
-    mitra: "PT Sukses Bersama",
-    status: "ACTIVE",
-    documents: ["Perjanjian Kemitraan", "Addendum IPL"],
-    hash: "-",
-    privy: { status: "draft", actors: ["Client"] },
-    updated_at: "2024-09-01 09:10",
-  },
+    updated_at: "2024-09-01 10:22"
+  }
 ];
 
 const documentPipeline = [
@@ -29,53 +25,48 @@ const documentPipeline = [
   { step: "Review", status: "done" },
   { step: "Approval", status: "active" },
   { step: "PrivyID", status: "pending" },
-  { step: "Final PDF", status: "pending" },
+  { step: "Final PDF", status: "pending" }
 ];
 
+/* =========================
+   RENDER
+========================= */
+
 function hydrate() {
-  // existing hydrate logic (tetap)
+  const list = document.getElementById("splList");
+  if (!list) return;
+
+  list.innerHTML = sampleSpls
+    .map(
+      (s) => `
+    <li>
+      <strong>${s.id}</strong> — ${s.client} / ${s.mitra}
+      <br>Status: ${s.status}
+    </li>`
+    )
+    .join("");
 }
 
-async function persistSplStatus(id, status) {
-  // existing persistence logic (tetap)
-}
-
-function appendAuditEntry(message, hash) {
-  // existing audit logic (tetap)
-}
+/* =========================
+   EVENTS
+========================= */
 
 function attachEvents() {
-  document.getElementById("btnSendPrivy")?.addEventListener("click", () => {
-    appendAuditEntry("Dokumen dikirim ke PrivyID", sampleSpls[0].hash);
-    hydrate();
-  });
-
-  document.getElementById("signaturePanel")?.addEventListener("click", (event) => {
-    const button = event.target.closest("button");
-    if (!button) return;
-
-    const action = button.dataset.action;
-    if (action === "remind") {
-      alert("Reminder penandatanganan dikirim ke semua penandatangan.");
-    }
-    if (action === "download") {
-      alert("PDF final diunduh untuk arsip legal.");
-    }
-  });
-
-  document.getElementById("btnLock")?.addEventListener("click", async () => {
-    const spl = sampleSpls[0];
-    spl.status = "LOCKED";
-    appendAuditEntry(`SPL ${spl.id} dikunci (LOCKED)`, spl.hash);
-    await persistSplStatus(spl.id, spl.status);
-    hydrate();
-  });
-
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-    await signOutFirebase();
-    window.location.href = "/apps/login/";
+    try {
+      await signOutFirebase();
+    } catch (err) {
+      console.warn("Firebase signOut gagal, lanjut logout", err);
+    } finally {
+      clearPortalSession();
+      window.location.href = "/";
+    }
   });
 }
+
+/* =========================
+   INIT
+========================= */
 
 hydrate();
 attachEvents();
