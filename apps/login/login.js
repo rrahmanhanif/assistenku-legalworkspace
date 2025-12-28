@@ -30,6 +30,10 @@ const templateOptions = {
 
 let selectedRole = "CLIENT";
 
+/* =========================
+   UI & ROLE HANDLING
+========================= */
+
 function renderTemplateOptions(role) {
   if (!iplSelect) return;
   iplSelect.innerHTML = "";
@@ -43,9 +47,8 @@ function renderTemplateOptions(role) {
 
 function toggleDocFields(role) {
   const isAdmin = role === "ADMIN";
-  if (docFields) {
-    docFields.style.display = isAdmin ? "none" : "block";
-  }
+  if (docFields) docFields.style.display = isAdmin ? "none" : "block";
+
   if (isAdmin) {
     if (iplSelect) iplSelect.value = "";
     if (docNumberInput) docNumberInput.value = "";
@@ -68,10 +71,14 @@ roleButtons.forEach((btn) => {
   btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
 });
 
+/* =========================
+   INIT FROM URL PARAM
+========================= */
+
 const params = new URLSearchParams(window.location.search);
 const defaultRole = params.get("role");
-const docFromLink = params.get("doc") || "";
 const templateFromLink = params.get("tpl") || "";
+const docFromLink = params.get("doc") || "";
 
 if (defaultRole && templateOptions[defaultRole]) {
   setActiveRole(defaultRole);
@@ -87,13 +94,18 @@ if (docFromLink && docNumberInput) {
   docNumberInput.value = decodeURIComponent(docFromLink);
 }
 
+/* =========================
+   VALIDATION & STORAGE
+========================= */
+
 async function validateIplTemplate(path) {
   const response = await fetch(path, { cache: "no-store" });
   if (!response.ok) throw new Error("Dokumen IPL tidak dapat diakses");
 
   const text = await response.text();
-  if (!text || text.trim().length < 20) throw new Error("Konten IPL tidak valid");
-
+  if (!text || text.trim().length < 20) {
+    throw new Error("Konten IPL tidak valid");
+  }
   return text.substring(0, 120);
 }
 
@@ -104,7 +116,7 @@ function savePendingSession(payload) {
 function loadPendingSession() {
   try {
     return JSON.parse(localStorage.getItem("lw_pending_login"));
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -122,12 +134,17 @@ function persistAccess({ role, template, docNumber, preview }) {
   );
 }
 
+/* =========================
+   SEND OTP
+========================= */
+
 btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
   const templatePath = iplSelect?.value;
   const docNumber = docNumberInput?.value.trim();
 
   if (!email) return alert("Email wajib diisi");
+
   if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
     return alert(`Email admin wajib ${ADMIN_EMAIL}`);
   }
@@ -138,7 +155,7 @@ btnSend?.addEventListener("click", async () => {
   }
 
   try {
-    let preview;
+    let preview = null;
     if (selectedRole !== "ADMIN") {
       preview = await validateIplTemplate(templatePath);
     }
@@ -153,12 +170,16 @@ btnSend?.addEventListener("click", async () => {
     savePendingSession({ role: selectedRole, template: templatePath, docNumber, preview });
     localStorage.setItem("lw_last_email", email);
 
-    alert("OTP dikirim via Firebase. Cek inbox/spam dan buka tautannya untuk verifikasi.");
+    alert("OTP dikirim via Firebase. Cek inbox/spam dan buka tautannya.");
   } catch (err) {
     console.error(err);
     alert(err?.message || "Gagal mengirim OTP");
   }
 });
+
+/* =========================
+   VERIFY OTP (MANUAL)
+========================= */
 
 btnVerify?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
@@ -168,38 +189,36 @@ btnVerify?.addEventListener("click", async () => {
   const pending = loadPendingSession();
 
   if (!email) return alert("Email wajib diisi");
+
   if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
     return alert(`Email admin wajib ${ADMIN_EMAIL}`);
   }
+
   if (selectedRole !== "ADMIN") {
     if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
     if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
   }
 
   try {
-    const preview = pending?.preview;
+    const preview = pending?.preview || null;
     await completeEmailOtpSignIn(email, token);
 
     persistAccess({ role: selectedRole, template: templatePath, docNumber, preview });
 
-    if (selectedRole === "CLIENT") {
-      window.location.href = "/apps/client/";
-    } else if (selectedRole === "MITRA") {
-      window.location.href = "/apps/mitra/";
-    } else if (selectedRole === "ADMIN") {
-      window.location.href = "/apps/admin/";
-    } else {
-      alert("Role tidak dikenali. Hubungi admin.");
-    }
+    redirectByRole(selectedRole);
   } catch (err) {
     console.error(err);
     alert(err?.message || "Gagal verifikasi OTP");
   }
 });
 
+/* =========================
+   AUTO SIGN-IN VIA LINK
+========================= */
+
 (async function autoCompleteFromLink() {
   try {
-    if (!hasEmailOtpLink()) return;
+    if (!(await hasEmailOtpLink())) return;
 
     const stored = loadPendingSession();
     const email = localStorage.getItem("lw_last_email") || emailInput?.value.trim();
@@ -217,14 +236,24 @@ btnVerify?.addEventListener("click", async () => {
       preview: stored?.preview
     });
 
-    if (role === "CLIENT") {
-      window.location.href = "/apps/client/";
-    } else if (role === "MITRA") {
-      window.location.href = "/apps/mitra/";
-    } else if (role === "ADMIN") {
-      window.location.href = "/apps/admin/";
-    }
+    redirectByRole(role);
   } catch (err) {
     console.error("Auto sign-in gagal", err);
   }
 })();
+
+/* =========================
+   REDIRECT
+========================= */
+
+function redirectByRole(role) {
+  if (role === "CLIENT") {
+    window.location.href = "/apps/client/";
+  } else if (role === "MITRA") {
+    window.location.href = "/apps/mitra/";
+  } else if (role === "ADMIN") {
+    window.location.href = "/apps/admin/";
+  } else {
+    alert("Role tidak dikenali. Hubungi admin.");
+  }
+}
