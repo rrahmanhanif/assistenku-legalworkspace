@@ -1,5 +1,3 @@
-import { supabase } from "./supabase.js";
-
 const templateMap = {
   IPL: [
     { file: "01-ipl.html", label: "Perjanjian Induk Layanan (IPL)" },
@@ -28,9 +26,10 @@ export function getTemplatesByType(type) {
 }
 
 export function bindTemplateOptions(selectEl, type) {
+  if (!selectEl) return;
   const items = getTemplatesByType(type);
   selectEl.innerHTML = items
-    .map((item) => `<option value="${item.file}">${item.label}</option>`)
+    .map(item => `<option value="${item.file}">${item.label}</option>`)
     .join("");
 }
 
@@ -45,22 +44,20 @@ export function downloadTemplateFile(templateFile, suggestedName = templateFile)
 }
 
 export function savePortalSession({ role, docType, templateFile, documentId }) {
-  const payload = { role, docType, templateFile, documentId, timestamp: Date.now() };
+  const payload = {
+    role,
+    docType,
+    templateFile,
+    documentId,
+    timestamp: Date.now()
+  };
   localStorage.setItem("lw_portal_session", JSON.stringify(payload));
-}
-
-export async function fetchProfileRole() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData?.session?.user?.id;
-  if (!userId) return null;
-  const { data } = await supabase.from("profiles").select("role").eq("id", userId).single();
-  return data?.role || null;
 }
 
 export function getPortalSession() {
   try {
     return JSON.parse(localStorage.getItem("lw_portal_session"));
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -69,11 +66,17 @@ export function clearPortalSession() {
   localStorage.removeItem("lw_portal_session");
 }
 
+export async function fetchProfileRole() {
+  const session = getPortalSession();
+  return session?.role || null;
+}
+
 export function requirePortalAccess(role, docType) {
   const session = getPortalSession();
   const requiredType = docType || requiredDocType[role];
   const matchedRole = session?.role === role;
-  const matchedDoc = session?.docType === requiredType;
+  const matchedDoc = role === "ADMIN" || session?.docType === requiredType;
+
   if (!matchedRole || !matchedDoc) {
     alert("Akses tidak valid. Silakan login sesuai dokumen digital yang dipersyaratkan.");
     window.location.href = "/";
@@ -81,9 +84,15 @@ export function requirePortalAccess(role, docType) {
 }
 
 export function renderBlankTemplateList(container) {
-  const allTemplates = [...templateMap.IPL, ...templateMap.SPL, ...templateMap.OTHER];
+  if (!container) return;
+  const allTemplates = [
+    ...templateMap.IPL,
+    ...templateMap.SPL,
+    ...templateMap.OTHER
+  ];
+
   container.innerHTML = "";
-  allTemplates.forEach((tpl) => {
+  allTemplates.forEach(tpl => {
     const item = document.createElement("div");
     item.className = "doc-card";
     item.innerHTML = `
@@ -93,11 +102,10 @@ export function renderBlankTemplateList(container) {
     `;
     container.appendChild(item);
   });
-  container.addEventListener("click", (ev) => {
+
+  container.addEventListener("click", ev => {
     const btn = ev.target.closest("button[data-template]");
     if (!btn) return;
     downloadTemplateFile(btn.dataset.template);
   });
 }
-
-export { requiredDocType };
