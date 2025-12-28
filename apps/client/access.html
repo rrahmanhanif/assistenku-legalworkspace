@@ -23,7 +23,7 @@
   <div class="auth-card">
     <p class="eyebrow">Portal Client</p>
     <h1>Akses dengan IPL Digital</h1>
-    <p>Silakan isi email perusahaan, pilih dokumen IPL digital, lalu masukkan nomor IPL untuk signup & signin.</p>
+    <p>Silakan isi email perusahaan, pilih dokumen IPL digital, lalu masukkan nomor IPL untuk meminta tautan login email tanpa OTP manual.</p>
 
     <label for="template">IPL Digital</label>
     <select id="template" data-template></select>
@@ -35,12 +35,8 @@
     <label for="email">Email</label>
     <input id="email" type="email" data-email placeholder="email@client.com" />
 
-    <label for="otp">OTP</label>
-    <input id="otp" data-otp placeholder="Masukkan OTP 6 digit" />
-
     <div class="actions">
-      <button class="secondary" data-action="send-otp">Kirim OTP</button>
-      <button class="primary" data-action="verify">Verifikasi & Masuk</button>
+      <button class="primary" data-action="send-otp">Kirim Tautan Masuk</button>
     </div>
 
     <p class="muted">Hanya client dengan IPL digital yang sah yang bisa melanjutkan ke dashboard.</p>
