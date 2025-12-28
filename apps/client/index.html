@@ -6,12 +6,14 @@
   <title>Dashboard Client | Assistenku Legal</title>
   <link rel="stylesheet" href="/assets/css/app.css" />
 
+  <!-- Firebase Config (global) -->
   <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 
+  <!-- Access Control -->
   <script type="module">
     import { requirePortalAccess } from "../shared/access.js";
     requirePortalAccess("CLIENT", "IPL");
@@ -36,23 +38,41 @@
       <article class="card highlight">
         <p class="eyebrow">Status SPL</p>
         <h2 id="splStatus">-</h2>
+        <p class="muted">Status SPL terakhir yang diproses.</p>
+        <div class="card-actions">
+          <button id="btnSendToPrivy">Kirim ke PrivyID</button>
+          <button id="btnOpenEvidence" class="secondary">Buka Evidence</button>
+        </div>
       </article>
 
       <article class="card">
-        <p class="eyebrow">Workflow PrivyID</p>
-        <ul id="privyTimeline"></ul>
-        <button id="btnSendToPrivy">Kirim ke PrivyID</button>
+        <p class="eyebrow">PrivyID</p>
+        <h2>Workflow</h2>
+        <p class="muted">Pantau status pengiriman dan tanda tangan.</p>
+        <div id="privyList" class="list">
+          <!-- Diisi via script -->
+        </div>
       </article>
 
       <article class="card">
         <p class="eyebrow">Evidence</p>
-        <ul id="evidenceList"></ul>
-        <button id="btnOpenEvidence" class="secondary">Lihat Evidence</button>
+        <h2>Audit Trail</h2>
+        <p class="muted">Bukti kerja harian dan status penguncian.</p>
+        <div id="evidenceList" class="list">
+          <!-- Diisi via script -->
+        </div>
       </article>
     </section>
 
     <section class="card">
-      <h3>Daftar SPL</h3>
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Daftar SPL</p>
+          <h2>Dokumen & Status</h2>
+          <p class="muted">Preview template legal, hash, dan status.</p>
+        </div>
+      </div>
+
       <div class="responsive-table">
         <table id="splTable">
           <thead>
@@ -72,7 +92,14 @@
     </section>
 
     <section class="card">
-      <h3>Invoice</h3>
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Invoice</p>
+          <h2>Permintaan Pembayaran</h2>
+          <p class="muted">Pantau status invoice dan unduh PDF.</p>
+        </div>
+        <button id="btnRequestInvoice" class="secondary">Ajukan Invoice</button>
+      </div>
 
       <div class="responsive-table">
         <table id="invoiceTable">
@@ -91,8 +118,6 @@
           </tbody>
         </table>
       </div>
-
-      <button id="btnRequestInvoice" class="secondary">Ajukan Invoice</button>
     </section>
   </main>
 
@@ -123,53 +148,81 @@
     ];
 
     function pillStatus(status) {
-      return `<span class="pill ${String(status).toLowerCase()}">${status}</span>`;
+      const normalized = String(status || "-").toLowerCase();
+      let variant = "muted";
+      if (normalized.includes("final") || normalized.includes("siap")) variant = "success";
+      if (normalized.includes("active") || normalized.includes("menunggu") || normalized.includes("pending")) variant = "warning";
+      if (normalized.includes("draft")) variant = "muted";
+      if (normalized.includes("locked")) variant = "danger";
+      return `<span class="pill ${variant}">${status}</span>`;
     }
 
     function renderSPL() {
+      const statusEl = document.getElementById("splStatus");
       const tbody = document.querySelector("#splTable tbody");
+      if (!tbody) return;
+
       tbody.innerHTML = "";
-      splRows.forEach((r) => {
+      if (statusEl) statusEl.textContent = splRows?.[0]?.status || "-";
+
+      splRows.forEach((row) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${r.number}</td>
-          <td>${r.mitra}</td>
-          <td>${pillStatus(r.status)}</td>
-          <td>${r.hash}</td>
+          <td>${row.number}</td>
+          <td>${row.mitra}</td>
+          <td>${pillStatus(row.status)}</td>
+          <td>${row.hash}</td>
           <td class="actions">
-            <button class="secondary" data-action="preview" data-template="${r.template}">Preview</button>
-            <button data-action="open" data-number="${r.number}">Detail</button>
+            <button class="secondary" data-action="preview" data-template="${row.template}">Preview</button>
+            <button data-action="open" data-number="${row.number}">Detail</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
-
-      const statusEl = document.getElementById("splStatus");
-      if (statusEl) statusEl.textContent = splRows[0]?.status || "-";
     }
 
     function renderPrivy() {
-      const ul = document.getElementById("privyTimeline");
-      ul.innerHTML = "";
-      privyItems.forEach((p) => {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${p.title}</strong><div class="muted">${p.desc}</div>`;
-        ul.appendChild(li);
+      const list = document.getElementById("privyList");
+      if (!list) return;
+      list.innerHTML = "";
+
+      privyItems.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "list-item";
+        div.innerHTML = `
+          <div class="list-item-main">
+            <strong>${item.title}</strong>
+            <p class="muted">${item.desc}</p>
+          </div>
+          <div>${pillStatus(item.status)}</div>
+        `;
+        list.appendChild(div);
       });
     }
 
     function renderEvidence() {
-      const ul = document.getElementById("evidenceList");
-      ul.innerHTML = "";
-      evidenceItems.forEach((e) => {
-        const li = document.createElement("li");
-        li.textContent = `${e.title} • ${e.doc} • ${e.status}`;
-        ul.appendChild(li);
+      const list = document.getElementById("evidenceList");
+      if (!list) return;
+      list.innerHTML = "";
+
+      evidenceItems.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "list-item";
+        div.innerHTML = `
+          <div class="list-item-main">
+            <strong>${item.title}</strong>
+            <p class="muted">${item.doc}</p>
+          </div>
+          <div>${pillStatus(item.status)}</div>
+        `;
+        list.appendChild(div);
       });
     }
 
     function renderInvoices() {
       const tbody = document.querySelector("#invoiceTable tbody");
+      if (!tbody) return;
+
       tbody.innerHTML = "";
       invoiceItems.forEach((i) => {
         const tr = document.createElement("tr");
@@ -216,8 +269,8 @@
       document.querySelector("#splTable tbody")?.addEventListener("click", (ev) => {
         const btn = ev.target.closest("button[data-action]");
         if (!btn) return;
-        const action = btn.dataset.action;
 
+        const action = btn.dataset.action;
         if (action === "preview") {
           alert(`Preview template: ${btn.dataset.template}`);
         }
@@ -235,7 +288,7 @@
           alert(`Unduh PDF invoice: ${btn.dataset.id}`);
         }
         if (action === "invoice-detail") {
-          alert(`Detail invoice: ${btn.dataset.id}`);
+          alert(`Buka detail invoice: ${btn.dataset.id}`);
         }
       });
     }
