@@ -23,72 +23,70 @@ const statusLabels = {
 
 function renderLegend() {
   const container = document.getElementById("statusLegend");
-  if (!container) return;
-
   container.innerHTML = Object.keys(statusLabels)
     .map((key) => `<span class="pill ${key.toLowerCase()}">${key}</span>`)
     .join("");
 }
 
 function setSummary() {
-  const splId = document.getElementById("splId");
-  const splStatus = document.getElementById("splStatus");
-  const splHash = document.getElementById("splHash");
-  const privyStatus = document.getElementById("privyStatus");
+  const statusEl = document.getElementById("splStatus");
+  const hashEl = document.getElementById("splHash");
+  const privyEl = document.getElementById("privyStatus");
 
-  if (splId) splId.textContent = activeSpl.id;
-  if (splStatus) splStatus.textContent = activeSpl.status;
-  if (splHash) splHash.textContent = activeSpl.hash;
-  if (privyStatus) privyStatus.textContent = activeSpl.privy;
-}
-
-function renderLogs() {
-  const tbody = document.querySelector("#logTable tbody");
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-  workLogs.forEach((log) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${log.ts}</td>
-      <td>${log.action}</td>
-      <td>${log.hash}</td>
-      <td><span class="pill ${String(log.status).toLowerCase()}">${log.status}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  if (statusEl) statusEl.innerText = activeSpl.status;
+  if (hashEl) hashEl.innerText = activeSpl.hash;
+  if (privyEl) privyEl.innerText = activeSpl.privy;
 }
 
 function setLatestLog(log) {
-  const el = document.getElementById("lastLog");
-  if (!el) return;
-  el.textContent = `${log.ts} — ${log.action}`;
+  const latestEl = document.getElementById("latestLog");
+  if (!latestEl) return;
+  latestEl.innerHTML = `
+    <div><strong>${log.action}</strong></div>
+    <div class="muted">${log.ts} • Hash: ${log.hash} • Status: ${log.status}</div>
+  `;
+}
+
+function renderLogs() {
+  const container = document.getElementById("workLogList");
+  if (!container) return;
+
+  container.innerHTML = workLogs
+    .map(
+      (l) => `
+      <div class="card">
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <div>
+            <div><strong>${l.action}</strong></div>
+            <div class="muted">${l.ts} • Hash: ${l.hash}</div>
+          </div>
+          <div><span class="pill ${String(l.status).toLowerCase()}">${l.status}</span></div>
+        </div>
+      </div>
+    `
+    )
+    .join("");
 }
 
 async function persistWorkLog(payload) {
-  // Demo: Anda masih bisa pakai supabase untuk sink data/audit sesuai rancangan.
-  // Jika nanti benar-benar dimatikan, fungsi ini tinggal diganti.
-  try {
-    if (!supabase) return;
-    // Contoh sink (opsional): supabase.from("work_logs").insert(payload);
-  } catch (err) {
-    console.error("persistWorkLog gagal", err);
-  }
+  // Catatan: bagian ini saya biarkan sesuai arsitektur Anda.
+  // Jika Anda masih simpan ke Supabase, implementasinya bisa tetap memakai `supabase`.
+  // Jika sudah migrasi penuh, kita ganti ke endpoint/Firebase.
+  return payload;
 }
 
 function hydrate() {
   renderLegend();
   setSummary();
   renderLogs();
-  if (workLogs?.[0]) setLatestLog(workLogs[0]);
+  setLatestLog(workLogs[0]);
 }
 
 function attachEvents() {
   document.getElementById("btnSubmit")?.addEventListener("click", async () => {
-    const desc = document.getElementById("description")?.value.trim() || "Kinerja dikirim";
-    const workDate = document.getElementById("workDate")?.value || "2024-09-01";
-    const ts = `${workDate} 10:00`;
-    const hash = activeSpl.hash || "3ac4...9f1a";
+    const desc = document.getElementById("description").value.trim() || "Kinerja dikirim";
+    const ts = `${document.getElementById("workDate").value} 10:00`;
+    const hash = "3ac4...9f1a";
 
     const newLog = { ts, action: `${desc} (LOCKED)`, hash, status: "LOCKED" };
     workLogs.unshift(newLog);
@@ -97,7 +95,6 @@ function attachEvents() {
 
     renderLogs();
     setLatestLog(newLog);
-
     const lastStatus = document.getElementById("lastStatus");
     if (lastStatus) lastStatus.innerText = "LOCKED & dikirim ke Client";
   });
