@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="/apps/login/style.css" />
 
   <script src="/assets/firebase-config.js"></script>
+
+  <script>
+    window.LEGALWORKSPACE_BASE_URL = "https://legalworkspace.assistenku.com";
+  </script>
+
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
@@ -19,25 +24,27 @@
     <div class="login-card">
       <h1>Assistenku Legal</h1>
       <p class="subtitle">
-        Masuk atau daftar menggunakan OTP berbasis IPL / SPL digital.
+        Masuk atau daftar menggunakan OTP berbasis IPL digital.
       </p>
 
+      <!-- ROLE SWITCHER -->
       <div class="role-switcher" aria-label="Pilih portal">
         <button class="role-btn active" data-role="CLIENT">Portal Client</button>
         <button class="role-btn" data-role="MITRA">Portal Mitra</button>
         <button class="role-btn" data-role="ADMIN">Portal Admin</button>
       </div>
 
+      <!-- NOTICE -->
       <div class="notice">
         <p>
-          <strong>Verifikasi IPL / SPL</strong>:
+          <strong>Verifikasi IPL/SPL</strong>:
           pilih dokumen digital Anda dari folder
-          <code>documents/templates</code>
-          dan masukkan nomor IPL / SPL yang tercetak pada PDF fisik.
+          <code>documents/templates</code> dan masukkan nomor IPL/SPL yang tercetak pada PDF fisik.
         </p>
         <p class="subtitle">Admin tidak perlu memasukkan nomor dokumen.</p>
       </div>
 
+      <!-- EMAIL -->
       <label for="email">Email</label>
       <input
         id="email"
@@ -46,6 +53,7 @@
         autocomplete="email"
       />
 
+      <!-- IPL/SPL SELECT + DOC NUMBER -->
       <div id="docFields">
         <label for="iplSelect">Dokumen IPL / SPL Digital</label>
         <select id="iplSelect"></select>
@@ -54,7 +62,7 @@
           <code>documents/templates</code>.
         </small>
 
-        <label for="docNumber">Nomor IPL / SPL</label>
+        <label for="docNumber">Nomor IPL/SPL</label>
         <input
           id="docNumber"
           type="text"
@@ -63,6 +71,7 @@
         />
       </div>
 
+      <!-- OTP -->
       <label for="otp">OTP</label>
       <input
         id="otp"
@@ -72,14 +81,15 @@
         autocomplete="one-time-code"
       />
 
+      <!-- ACTIONS -->
       <div class="actions">
         <button id="btnSend">Kirim OTP</button>
         <button id="btnVerify">Verifikasi &amp; Masuk</button>
       </div>
 
       <p class="note">
-        Setelah verifikasi, pengguna diarahkan otomatis ke portal
-        sesuai role dan nomor IPL / SPL.
+        Setelah verifikasi, user diarahkan otomatis ke portal
+        sesuai role dan IPL yang dipilih.
       </p>
     </div>
   </div>
