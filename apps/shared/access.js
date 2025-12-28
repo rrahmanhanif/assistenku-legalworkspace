@@ -1,3 +1,5 @@
+import { getFirebaseAuth } from "./firebase.js";
+
 const templateMap = {
   IPL: [
     { file: "01-ipl.html", label: "Perjanjian Induk Layanan (IPL)" },
@@ -48,7 +50,6 @@ export function savePortalSession({ role, docType, templateFile, documentId }) {
 }
 
 export async function fetchProfileRole() {
-  // Dengan OTP Firebase, role disimpan di localStorage melalui sesi portal.
   const session = getPortalSession();
   return session?.role || null;
 }
@@ -61,22 +62,82 @@ export function getPortalSession() {
   }
 }
 
-export function clearPortalSession() {
-  localStorage.removeItem("lw_portal_session");
+function getIplAccessFallback() {
+  try {
+    return JSON.parse(localStorage.getItem("iplAccess"));
+  } catch {
+    return null;
+  }
 }
 
+export function clearPortalSession() {
+  localStorage.removeItem("lw_portal_session");
+  localStorage.removeItem("iplAccess");
+  localStorage.removeItem("lw_pending_login");
+  localStorage.removeItem("lw_last_email");
+}
+
+/**
+ * Guard portal:
+ * 1) Pastikan Firebase Auth sudah siap (menunggu sampai 5 detik)
+ * 2) Validasi role/docType dari session localStorage
+ */
 export function requirePortalAccess(role, docType) {
-  const session = getPortalSession();
+  const auth = getFirebaseAuth();
+
   const requiredType = docType || requiredDocType[role];
-  const matchedRole = session?.role === role;
 
-  // ADMIN tidak wajib memiliki docType match (karena tidak input dokumen).
-  const matchedDoc = role === "ADMIN" || session?.docType === requiredType;
-
-  if (!matchedRole || !matchedDoc) {
+  const redirectToLogin = (msg) => {
+    if (msg) console.warn(msg);
     alert("Akses tidak valid. Silakan login sesuai dokumen digital yang dipersyaratkan.");
-    window.location.href = "/";
-  }
+    const url = new URL(window.location.origin + "/apps/login/");
+    url.searchParams.set("role", role);
+    window.location.replace(url.toString());
+  };
+
+  const checkSession = () => {
+    const session = getPortalSession();
+    const fallback = getIplAccessFallback();
+
+    // Ambil role/docType dari session utama atau fallback
+    const sessionRole = session?.role || fallback?.role || null;
+    const sessionDocType = session?.docType || null; // fallback iplAccess tidak menyimpan docType
+    const hasRole = sessionRole === role;
+
+    // ADMIN tidak wajib docType match
+    const matchedDoc =
+      role === "ADMIN" ||
+      sessionDocType === requiredType ||
+      // fallback: jika sessionDocType tidak ada, minimal pastikan dokumen ada untuk non-admin
+      (!!fallback?.documentId && !!fallback?.template);
+
+    if (!hasRole || !matchedDoc) {
+      return redirectToLogin("Role/docType tidak match atau sesi tidak ditemukan.");
+    }
+
+    // ✅ Lolos
+    return true;
+  };
+
+  const timeoutMs = 5000;
+  const start = Date.now();
+
+  const tick = () => {
+    const user = auth.currentUser;
+
+    // tunggu auth siap
+    if (!user) {
+      if (Date.now() - start > timeoutMs) {
+        return redirectToLogin("Firebase auth tidak siap / belum login.");
+      }
+      return setTimeout(tick, 120);
+    }
+
+    // auth siap → cek session localStorage
+    checkSession();
+  };
+
+  tick();
 }
 
 export function renderBlankTemplateList(container) {
