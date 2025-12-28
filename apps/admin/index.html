@@ -6,14 +6,12 @@
   <title>Dashboard Admin | LegalWorkspace</title>
   <link rel="stylesheet" href="/assets/css/app.css" />
 
-  <!-- Firebase (Opsi A) -->
   <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 </head>
-
 <body>
   <header>
     <div>
@@ -41,96 +39,4 @@
         <p class="muted">Pembayaran ke mitra & penagihan ke client hanya aktif jika bukti kinerja ada.</p>
       </article>
 
-      <article class="card">
-        <p class="eyebrow">Bukti Kinerja</p>
-        <h2>Upload & Validasi</h2>
-        <p class="muted">Evidence tersimpan untuk audit dan menjadi dasar invoice.</p>
-      </article>
-    </section>
-
-    <section class="card">
-      <div class="section-header">
-        <div>
-          <p class="eyebrow">Dokumen IPL/SPL</p>
-          <h2>Daftar Dokumen</h2>
-          <p class="muted">Monitoring status DRAFT → ACTIVE → FINAL → LOCKED dan file template terkait.</p>
-        </div>
-        <div class="actions">
-          <button id="btnAddInvoice" class="secondary">Tambah Invoice</button>
-          <button id="btnUploadEvidence">Upload Bukti</button>
-        </div>
-      </div>
-
-      <div id="docLegend" class="pill-group"></div>
-
-      <div class="responsive-table table-card">
-        <table id="docTable">
-          <thead>
-            <tr>
-              <th>Tipe</th>
-              <th>Nomor</th>
-              <th>Pemilik</th>
-              <th>Status</th>
-              <th>Hash</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="grid two">
-      <article class="card">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">Invoice</p>
-            <h3>Daftar Invoice</h3>
-            <p class="muted">Generate invoice & PDF legal-grade dari IPL/SPL yang sudah terkunci.</p>
-          </div>
-        </div>
-
-        <div class="responsive-table table-card">
-          <table id="invoiceTable">
-            <thead>
-              <tr>
-                <th>Nomor</th>
-                <th>Referensi SPL</th>
-                <th>Nilai</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-
-      <article class="card">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">Evidence</p>
-            <h3>Bukti Kinerja Harian</h3>
-            <p class="muted">Upload foto timemark, tabel kinerja, dan bukti lain untuk audit & pembayaran.</p>
-          </div>
-        </div>
-
-        <ul id="evidenceList" class="checklist"></ul>
-      </article>
-    </section>
-
-    <section class="card">
-      <div class="section-header">
-        <div>
-          <p class="eyebrow">Template Download</p>
-          <h2>Template Legal</h2>
-          <p class="muted">Unduh file template resmi dari folder documents/templates.</p>
-        </div>
-      </div>
-      <div id="templateDownloads" class="doc-grid"></div>
-    </section>
-  </main>
-
-  <script type="module" src="/apps/admin/admin.js"></script>
-</body>
-</html>
+      <!-- lanjutkan isi file Anda yang sudah ada di bawah sini -->
