@@ -6,7 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link rel="stylesheet" href="/assets/css/app.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Firebase -->
+  <script src="/assets/firebase-config.js"></script>
+  <script type="module">
+    import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+  </script>
 
   <!-- Guard Role -->
   <script type="module">
@@ -33,53 +39,58 @@
   </header>
 
   <main class="container">
-    <!-- RINGKASAN STATUS -->
-    <section class="grid two">
+    <section class="grid three">
       <article class="card highlight">
-        <p class="eyebrow">SPL Aktif</p>
-        <h2 id="activeSpl">-</h2>
-        <p class="muted">Lifecycle: DRAFT → ACTIVE → FINAL → LOCKED</p>
+        <p class="eyebrow">Status SPL</p>
+        <h2 id="splStatus">-</h2>
       </article>
 
       <article class="card">
-        <p class="eyebrow">Status Tanda Tangan</p>
-        <h2 id="signState">-</h2>
-        <p class="muted">
-          PrivyID production dengan penandatangan Client & Mitra.
-        </p>
+        <p class="eyebrow">Kinerja Harian</p>
+        <ul id="dailyPerformance"></ul>
+        <button id="btnAddPerformance">Tambah Kinerja</button>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">Evidence</p>
+        <ul id="evidenceList"></ul>
+        <button id="btnUploadEvidence" class="secondary">Unggah Bukti</button>
       </article>
     </section>
 
-    <!-- KINERJA & DOKUMEN -->
-    <section class="grid two">
-      <article class="card">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">Kinerja Harian</p>
-            <h3>Lembar Kinerja</h3>
-            <p class="muted">
-              Data terkunci otomatis setelah submit (LOCKED_BY_SYSTEM).
-            </p>
-          </div>
-        </div>
-        <div id="kinerjaList" class="responsive-table"></div>
-      </article>
-
-      <article class="card">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">Dokumen Legal</p>
-            <h3>SPL & Perjanjian</h3>
-            <p class="muted">
-              Dokumen resmi yang terhubung dengan aktivitas mitra.
-            </p>
-          </div>
-        </div>
-        <div id="documentList" class="doc-grid"></div>
-      </article>
+    <section class="card">
+      <h3>Daftar SPL</h3>
+      <div class="responsive-table">
+        <table id="splTable">
+          <thead>
+            <tr>
+              <th>Nomor</th>
+              <th>Client</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </section>
   </main>
 
-  <script type="module" src="/apps/mitra/mitra.js"></script>
+  <script type="module">
+    import { signOutFirebase } from "../shared/firebase.js";
+
+    function attachEvents() {
+      document.getElementById("btnRefresh").onclick = () => {
+        alert("Data kinerja disegarkan (placeholder).");
+      };
+
+      document.getElementById("logoutBtn").onclick = async () => {
+        await signOutFirebase();
+        window.location.href = "/";
+      };
+    }
+
+    attachEvents();
+  </script>
 </body>
 </html>
