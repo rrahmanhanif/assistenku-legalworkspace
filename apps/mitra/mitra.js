@@ -24,23 +24,38 @@ const statusLabels = {
 function renderLegend() {
   const container = document.getElementById("statusLegend");
   if (!container) return;
+
   container.innerHTML = Object.keys(statusLabels)
     .map((key) => `<span class="pill ${key.toLowerCase()}">${key}</span>`)
     .join("");
 }
 
+function setSummary() {
+  const splId = document.getElementById("splId");
+  const splStatus = document.getElementById("splStatus");
+  const splHash = document.getElementById("splHash");
+  const privyStatus = document.getElementById("privyStatus");
+
+  if (splId) splId.textContent = activeSpl.id;
+  if (splStatus) splStatus.textContent = activeSpl.status;
+  if (splHash) splHash.textContent = activeSpl.hash;
+  if (privyStatus) privyStatus.textContent = activeSpl.privy;
+}
+
 function renderLogs() {
-  const list = document.getElementById("logList");
-  if (!list) return;
-  list.innerHTML = "";
+  const tbody = document.querySelector("#logTable tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
   workLogs.forEach((log) => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${log.ts}</span>
-      <span>${log.action}</span>
-      <span class="pill ${log.status.toLowerCase()}">${log.status}</span>
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${log.ts}</td>
+      <td>${log.action}</td>
+      <td>${log.hash}</td>
+      <td><span class="pill ${String(log.status).toLowerCase()}">${log.status}</span></td>
     `;
-    list.appendChild(li);
+    tbody.appendChild(tr);
   });
 }
 
@@ -50,29 +65,30 @@ function setLatestLog(log) {
   el.textContent = `${log.ts} — ${log.action}`;
 }
 
-function setSummary() {
-  const el = document.getElementById("splSummary");
-  if (!el) return;
-  el.textContent = `${activeSpl.id} • ${activeSpl.status.toUpperCase()} • Privy: ${activeSpl.privy}`;
-}
-
 async function persistWorkLog(payload) {
-  // placeholder: simpan ke backend (Supabase / API)
-  return payload;
+  // Demo: Anda masih bisa pakai supabase untuk sink data/audit sesuai rancangan.
+  // Jika nanti benar-benar dimatikan, fungsi ini tinggal diganti.
+  try {
+    if (!supabase) return;
+    // Contoh sink (opsional): supabase.from("work_logs").insert(payload);
+  } catch (err) {
+    console.error("persistWorkLog gagal", err);
+  }
 }
 
 function hydrate() {
   renderLegend();
-  renderLogs();
   setSummary();
+  renderLogs();
+  if (workLogs?.[0]) setLatestLog(workLogs[0]);
 }
 
 function attachEvents() {
   document.getElementById("btnSubmit")?.addEventListener("click", async () => {
     const desc = document.getElementById("description")?.value.trim() || "Kinerja dikirim";
-    const date = document.getElementById("workDate")?.value || "2024-09-01";
-    const ts = `${date} 10:00`;
-    const hash = "3ac4...9f1a";
+    const workDate = document.getElementById("workDate")?.value || "2024-09-01";
+    const ts = `${workDate} 10:00`;
+    const hash = activeSpl.hash || "3ac4...9f1a";
 
     const newLog = { ts, action: `${desc} (LOCKED)`, hash, status: "LOCKED" };
     workLogs.unshift(newLog);
@@ -81,6 +97,7 @@ function attachEvents() {
 
     renderLogs();
     setLatestLog(newLog);
+
     const lastStatus = document.getElementById("lastStatus");
     if (lastStatus) lastStatus.innerText = "LOCKED & dikirim ke Client";
   });
