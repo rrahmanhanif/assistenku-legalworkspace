@@ -33,7 +33,7 @@ let selectedRole = "CLIENT";
 function renderTemplateOptions(role) {
   if (!iplSelect) return;
   iplSelect.innerHTML = "";
-  (templateOptions[role] || []).forEach(item => {
+  (templateOptions[role] || []).forEach((item) => {
     const option = document.createElement("option");
     option.value = item.value;
     option.textContent = item.label;
@@ -43,26 +43,30 @@ function renderTemplateOptions(role) {
 
 function toggleDocFields(role) {
   const isAdmin = role === "ADMIN";
-  if (docFields) docFields.style.display = isAdmin ? "none" : "block";
+  if (docFields) {
+    docFields.style.display = isAdmin ? "none" : "block";
+  }
   if (isAdmin) {
     if (iplSelect) iplSelect.value = "";
     if (docNumberInput) docNumberInput.value = "";
-    if (emailInput && !emailInput.value) emailInput.value = ADMIN_EMAIL;
+    if (emailInput && !emailInput.value) {
+      emailInput.value = ADMIN_EMAIL;
+    }
   }
 }
 
 function setActiveRole(role) {
   selectedRole = role;
-  roleButtons.forEach(btn =>
-    btn.classList.toggle("active", btn.dataset.role === role)
-  );
+  roleButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.role === role);
+  });
   renderTemplateOptions(role);
   toggleDocFields(role);
 }
 
-roleButtons.forEach(btn =>
-  btn.addEventListener("click", () => setActiveRole(btn.dataset.role))
-);
+roleButtons.forEach((btn) => {
+  btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
+});
 
 const params = new URLSearchParams(window.location.search);
 const defaultRole = params.get("role");
@@ -85,9 +89,11 @@ if (docFromLink && docNumberInput) {
 
 async function validateIplTemplate(path) {
   const response = await fetch(path, { cache: "no-store" });
-  if (!response.ok) throw new Error("Dokumen tidak dapat diakses");
+  if (!response.ok) throw new Error("Dokumen IPL tidak dapat diakses");
+
   const text = await response.text();
-  if (!text || text.trim().length < 20) throw new Error("Konten dokumen tidak valid");
+  if (!text || text.trim().length < 20) throw new Error("Konten IPL tidak valid");
+
   return text.substring(0, 120);
 }
 
@@ -98,7 +104,7 @@ function savePendingSession(payload) {
 function loadPendingSession() {
   try {
     return JSON.parse(localStorage.getItem("lw_pending_login"));
-  } catch {
+  } catch (err) {
     return null;
   }
 }
@@ -122,13 +128,12 @@ btnSend?.addEventListener("click", async () => {
   const docNumber = docNumberInput?.value.trim();
 
   if (!email) return alert("Email wajib diisi");
-
   if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
     return alert(`Email admin wajib ${ADMIN_EMAIL}`);
   }
 
   if (selectedRole !== "ADMIN") {
-    if (!templatePath) return alert("Pilih dokumen IPL/SPL");
+    if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
     if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
   }
 
@@ -148,7 +153,7 @@ btnSend?.addEventListener("click", async () => {
     savePendingSession({ role: selectedRole, template: templatePath, docNumber, preview });
     localStorage.setItem("lw_last_email", email);
 
-    alert("OTP dikirim. Cek email dan buka tautan verifikasi.");
+    alert("OTP dikirim via Firebase. Cek inbox/spam dan buka tautannya untuk verifikasi.");
   } catch (err) {
     console.error(err);
     alert(err?.message || "Gagal mengirim OTP");
@@ -163,13 +168,11 @@ btnVerify?.addEventListener("click", async () => {
   const pending = loadPendingSession();
 
   if (!email) return alert("Email wajib diisi");
-
   if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
     return alert(`Email admin wajib ${ADMIN_EMAIL}`);
   }
-
   if (selectedRole !== "ADMIN") {
-    if (!templatePath) return alert("Pilih dokumen IPL/SPL");
+    if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
     if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
   }
 
@@ -177,12 +180,7 @@ btnVerify?.addEventListener("click", async () => {
     const preview = pending?.preview;
     await completeEmailOtpSignIn(email, token);
 
-    persistAccess({
-      role: selectedRole,
-      template: templatePath,
-      docNumber,
-      preview
-    });
+    persistAccess({ role: selectedRole, template: templatePath, docNumber, preview });
 
     if (selectedRole === "CLIENT") {
       window.location.href = "/apps/client/";
@@ -191,7 +189,7 @@ btnVerify?.addEventListener("click", async () => {
     } else if (selectedRole === "ADMIN") {
       window.location.href = "/apps/admin/";
     } else {
-      alert("Role tidak dikenali");
+      alert("Role tidak dikenali. Hubungi admin.");
     }
   } catch (err) {
     console.error(err);
@@ -202,9 +200,9 @@ btnVerify?.addEventListener("click", async () => {
 (async function autoCompleteFromLink() {
   try {
     if (!hasEmailOtpLink()) return;
+
     const stored = loadPendingSession();
-    const email =
-      localStorage.getItem("lw_last_email") || emailInput?.value.trim();
+    const email = localStorage.getItem("lw_last_email") || emailInput?.value.trim();
     if (!email) return;
 
     const role = stored?.role || selectedRole;
