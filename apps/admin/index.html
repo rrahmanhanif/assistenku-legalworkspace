@@ -3,25 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel Admin | Assistenku Legal</title>
+  <title>Dashboard Admin | LegalWorkspace</title>
   <link rel="stylesheet" href="/assets/css/app.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module">
-    import { requireRole } from "../shared/auth-guard.js";
-    requireRole("ADMIN");
-  </script>
 </head>
 <body>
   <header>
     <div>
-      <p class="eyebrow">Akses Admin</p>
-      <h1>Kontrol IPL, Mitra, dan Client</h1>
-      <p class="muted">
-        Pantau aktivitas berdasarkan IPL digital. Admin wajib login dengan dokumen IPL master.
-      </p>
+      <p class="eyebrow">Portal Admin</p>
+      <h1>Monitor Client & Mitra</h1>
+      <p class="muted">Akses berbasis IPL digital. Admin dapat memantau dokumen, kinerja mitra, serta membuat invoice.</p>
     </div>
     <div class="header-actions">
-      <button id="refreshBtn" class="secondary">Segarkan Data</button>
+      <button id="btnRefresh" class="secondary">Segarkan Data</button>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
@@ -29,59 +23,97 @@
   <main class="container">
     <section class="grid three">
       <article class="card highlight">
-        <p class="eyebrow">Verifikasi IPL</p>
-        <h2 id="iplInfo">-</h2>
-        <p class="muted">Admin hanya aktif bila membawa IPL master atau alur sistem.</p>
+        <p class="eyebrow">Kontrol Akses</p>
+        <h2>Client & Mitra Terproteksi</h2>
+        <p class="muted">Setiap portal wajib login menggunakan IPL/SPL digital resmi sebelum masuk.</p>
       </article>
-
       <article class="card">
-        <p class="eyebrow">Portal Client</p>
-        <h2 id="clientCount">-</h2>
-        <p class="muted">Jumlah client terdaftar dengan IPL digital.</p>
+        <p class="eyebrow">Invoice</p>
+        <h2 id="invoiceCount">-</h2>
+        <p class="muted">Pembayaran ke mitra & penagihan ke client hanya aktif jika bukti kinerja ada.</p>
       </article>
-
       <article class="card">
-        <p class="eyebrow">Portal Mitra</p>
-        <h2 id="mitraCount">-</h2>
-        <p class="muted">Mitra aktif dengan lembar kinerja terkini.</p>
+        <p class="eyebrow">Template</p>
+        <h2>Download Kosongan</h2>
+        <p class="muted">Semua dokumen di repo <code>documents/templates</code> siap diunduh.</p>
       </article>
     </section>
 
     <section class="card">
       <div class="section-header">
         <div>
-          <p class="eyebrow">Dokumen IPL Digital</p>
-          <h2>Akses langsung dari folder templates</h2>
-          <p class="muted">Gunakan untuk signup/signin dan audit role.</p>
+          <p class="eyebrow">Aktivitas Dokumen</p>
+          <h2>Client & Mitra</h2>
+          <p class="muted">Pantau status SPL/IPL, hash, dan apakah dokumen sudah dikunci.</p>
         </div>
+        <div class="pill-group" id="docLegend"></div>
       </div>
-      <div id="templateList" class="doc-grid"></div>
+      <div class="responsive-table">
+        <table id="docTable">
+          <thead>
+            <tr>
+              <th>Jenis</th>
+              <th>Nomor</th>
+              <th>Pemilik</th>
+              <th>Status</th>
+              <th>Dokumen</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="grid two">
       <article class="card">
         <div class="section-header">
           <div>
-            <p class="eyebrow">Aktivitas Client</p>
-            <h3>IP / SPL terbaru</h3>
-            <p class="muted">Admin dapat membuka detail IPL/SPL untuk validasi.</p>
+            <p class="eyebrow">Sistem Invoice</p>
+            <h2>Penagihan & Pembayaran</h2>
+            <p class="muted">Invoice client via IPL ke rekening Mandiri 1230009902984 a.n Abdurrahman Hanif. Pembayaran mitra via SPL ke rekening yang sama.</p>
           </div>
+          <button id="btnAddInvoice" class="secondary">Tambah Invoice</button>
         </div>
-        <div id="clientActivity" class="responsive-table"></div>
+        <div class="responsive-table">
+          <table id="invoiceTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Jenis</th>
+                <th>Dokumen</th>
+                <th>Rekening</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </article>
 
       <article class="card">
         <div class="section-header">
           <div>
-            <p class="eyebrow">Kinerja Mitra</p>
-            <h3>Monitoring per dokumen</h3>
-            <p class="muted">
-              Daftar lembar kinerja dan perjanjian mitra yang diverifikasi.
-            </p>
+            <p class="eyebrow">Bukti Kinerja</p>
+            <h2>Validasi Pembayaran</h2>
+            <p class="muted">Pembayaran hanya bisa dilakukan jika lembar kinerja harian digital tersedia.</p>
           </div>
+          <button id="btnUploadEvidence" class="secondary">Upload Bukti</button>
         </div>
-        <div id="mitraActivity" class="responsive-table"></div>
+        <div id="evidenceList" class="doc-grid"></div>
       </article>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Template Kosong</p>
+          <h2>Unduh Dokumen</h2>
+          <p class="muted">Gunakan untuk keperluan admin sebelum diisi digital.</p>
+        </div>
+      </div>
+      <div id="templateDownloads" class="doc-grid"></div>
     </section>
   </main>
 
