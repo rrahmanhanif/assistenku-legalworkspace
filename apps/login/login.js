@@ -28,10 +28,6 @@ const templateOptions = {
 
 let selectedRole = "CLIENT";
 
-/* =========================
-   UI & ROLE HANDLING
-========================= */
-
 function renderTemplateOptions(role) {
   if (!iplSelect) return;
   iplSelect.innerHTML = "";
@@ -45,11 +41,17 @@ function renderTemplateOptions(role) {
 
 function toggleDocFields(role) {
   const isAdmin = role === "ADMIN";
-  if (docFields) docFields.style.display = isAdmin ? "none" : "block";
+
+  if (docFields) {
+    docFields.style.display = isAdmin ? "none" : "block";
+  }
 
   if (isAdmin) {
-    if (iplSelect) iplSelect.value = "";
+    // Bersihkan doc/template jika admin
+    if (iplSelect) iplSelect.selectedIndex = -1;
     if (docNumberInput) docNumberInput.value = "";
+
+    // Auto isi email admin jika kosong
     if (emailInput && !emailInput.value) {
       emailInput.value = ADMIN_EMAIL;
     }
@@ -58,9 +60,11 @@ function toggleDocFields(role) {
 
 function setActiveRole(role) {
   selectedRole = role;
+
   roleButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.role === role);
   });
+
   renderTemplateOptions(role);
   toggleDocFields(role);
 }
@@ -69,14 +73,10 @@ roleButtons.forEach((btn) => {
   btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
 });
 
-/* =========================
-   INIT FROM URL PARAM
-========================= */
-
 const params = new URLSearchParams(window.location.search);
 const defaultRole = params.get("role");
-const templateFromLink = params.get("tpl") || "";
 const docFromLink = params.get("doc") || "";
+const templateFromLink = params.get("tpl") || "";
 
 if (defaultRole && templateOptions[defaultRole]) {
   setActiveRole(defaultRole);
@@ -92,18 +92,13 @@ if (docFromLink && docNumberInput) {
   docNumberInput.value = decodeURIComponent(docFromLink);
 }
 
-/* =========================
-   VALIDATION & STORAGE
-========================= */
-
 async function validateIplTemplate(path) {
   const response = await fetch(path, { cache: "no-store" });
-  if (!response.ok) throw new Error("Dokumen IPL tidak dapat diakses");
+  if (!response.ok) throw new Error("Dokumen IPL/SPL tidak dapat diakses");
 
   const text = await response.text();
-  if (!text || text.trim().length < 20) {
-    throw new Error("Konten IPL tidak valid");
-  }
+  if (!text || text.trim().length < 20) throw new Error("Konten dokumen tidak valid");
+
   return text.substring(0, 120);
 }
 
@@ -119,103 +114,66 @@ function loadPendingSession() {
   }
 }
 
-/**
- * Simpan sesi portal yang dipakai access.js (lw_portal_session).
- * Ini yang akan dibaca requirePortalAccess().
- */
-function savePortalSession({ role, docType, templateFile, documentId, preview }) {
-  const payload = {
-    role,
-    docType,
-    templateFile: templateFile || null,
-    documentId: documentId || null,
-    preview: preview || null,
-    timestamp: Date.now()
-  };
-  localStorage.setItem("lw_portal_session", JSON.stringify(payload));
-
-  // Backward-compatibility: kalau ada modul lain yang masih baca iplAccess
+function persistAccess({ role, template, docNumber, preview }) {
   localStorage.setItem(
     "iplAccess",
     JSON.stringify({
       role,
-      template: templateFile || null,
-      documentId: documentId || null,
+      template: template || null,
+      documentId: docNumber || null,
       preview: preview || null,
       at: new Date().toISOString()
     })
   );
 }
 
-function redirectByRole(role) {
-  if (role === "CLIENT") {
-    window.location.href = "/apps/client/";
-  } else if (role === "MITRA") {
-    window.location.href = "/apps/mitra/";
-  } else if (role === "ADMIN") {
-    window.location.href = "/apps/admin/";
-  } else {
-    alert("Role tidak dikenali. Hubungi admin.");
-  }
-}
-
-/* =========================
-   SEND MAGIC LINK (EMAIL ONLY)
-========================= */
-
 btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
-  const templatePath = iplSelect?.value; // path penuh
-  const docNumber = docNumberInput?.value.trim();
+  const templatePath = iplSelect?.value || "";
+  const docNumber = docNumberInput?.value.trim() || "";
 
   if (!email) return alert("Email wajib diisi");
 
-  if (selectedRole === "ADMIN" && email !== ADMIN_EMAIL) {
-    return alert(`Email admin wajib ${ADMIN_EMAIL}`);
-  }
+  // Simpan untuk auto-complete saat email-link dibuka (penting untuk device yang sama)
+  localStorage.setItem("lw_last_email", email);
 
-  if (selectedRole !== "ADMIN") {
+  if (selectedRole === "ADMIN") {
+    if (email !== ADMIN_EMAIL) return alert(`Email admin wajib ${ADMIN_EMAIL}`);
+  } else {
     if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
     if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
   }
 
   try {
-    let preview = null;
+    let preview;
     if (selectedRole !== "ADMIN") {
       preview = await validateIplTemplate(templatePath);
     }
 
-    // docType yang Anda pakai sebelumnya
-    const docType = selectedRole === "MITRA" ? "SPL" : "IPL";
+    // ADMIN: docType/docNumber/template tidak wajib
+    const docType =
+      selectedRole === "MITRA" ? "SPL" : selectedRole === "CLIENT" ? "IPL" : null;
 
     await sendEmailOtp(email, {
       role: selectedRole,
       docType,
-      docNumber,
-      template: templatePath
+      docNumber: selectedRole === "ADMIN" ? null : docNumber,
+      template: selectedRole === "ADMIN" ? null : templatePath
     });
 
-    // Simpan pending agar saat balik dari email link bisa auto-complete
     savePendingSession({
       role: selectedRole,
-      docType,
-      template: templatePath,
-      docNumber,
+      template: selectedRole === "ADMIN" ? null : templatePath,
+      docNumber: selectedRole === "ADMIN" ? null : docNumber,
       preview
     });
 
-    localStorage.setItem("lw_last_email", email);
-
-    alert("Link login dikirim via Firebase. Cek inbox/spam dan buka tautannya.");
+    alert("Tautan login dikirim via email. Buka email untuk menyelesaikan login.");
   } catch (err) {
     console.error(err);
-    alert(err?.message || "Gagal mengirim link login");
+    alert(err?.message || "Gagal mengirim tautan masuk");
   }
 });
-
-/* =========================
-   AUTO SIGN-IN VIA EMAIL LINK
-========================= */
 
 (async function autoCompleteFromLink() {
   try {
@@ -223,38 +181,32 @@ btnSend?.addEventListener("click", async () => {
     if (!isLink) return;
 
     const stored = loadPendingSession();
-    const email = localStorage.getItem("lw_last_email") || emailInput?.value.trim();
+    const email =
+      localStorage.getItem("lw_last_email") ||
+      emailInput?.value.trim();
 
     if (!email) {
-      alert("Email tidak ditemukan. Isi email yang sama seperti saat meminta link login.");
+      // Tidak bisa menyelesaikan sign-in tanpa email (Firebase email-link butuh email yang sama)
+      // Di UX yang lebih matang: Anda akan minta user mengetik email lagi.
       return;
     }
 
     const role = stored?.role || selectedRole;
-    if (role === "ADMIN" && email !== ADMIN_EMAIL) {
-      alert(`Email admin wajib ${ADMIN_EMAIL}`);
-      return;
-    }
+    if (role === "ADMIN" && email !== ADMIN_EMAIL) return;
 
-    // Ini yang menetapkan session Firebase
     await completeEmailOtpSignIn(email);
 
-    const docType = stored?.docType || (role === "MITRA" ? "SPL" : "IPL");
-    const templateFile = stored?.template || iplSelect?.value || null;
-    const documentId = stored?.docNumber || docNumberInput?.value || null;
-
-    // Simpan sesi agar portal guard tidak menendang balik
-    savePortalSession({
+    persistAccess({
       role,
-      docType,
-      templateFile,
-      documentId,
-      preview: stored?.preview || null
+      template: stored?.template || iplSelect?.value || null,
+      docNumber: stored?.docNumber || docNumberInput?.value || null,
+      preview: stored?.preview
     });
 
-    redirectByRole(role);
+    if (role === "CLIENT") window.location.href = "/apps/client/";
+    else if (role === "MITRA") window.location.href = "/apps/mitra/";
+    else if (role === "ADMIN") window.location.href = "/apps/admin/";
   } catch (err) {
     console.error("Auto sign-in gagal", err);
-    alert(err?.message || "Auto sign-in gagal. Silakan kirim link login lagi.");
   }
 })();
