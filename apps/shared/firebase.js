@@ -11,6 +11,21 @@ let firebaseApp;
 let firebaseAuth;
 let configPromise;
 
+function getContinueBaseUrl() {
+  const rawBase = (window?.LEGALWORKSPACE_BASE_URL || window?.APP_BASE_URL || "").trim();
+  const fallback = window.location.origin;
+  const candidate = rawBase || fallback;
+
+  try {
+    const parsed = new URL(candidate);
+    // FIX: regex harus /\/+$/ (bukan /\/+$,)
+    const normalized = (parsed.origin + parsed.pathname).replace(/\/+$/, "");
+    return normalized || parsed.origin;
+  } catch (_err) {
+    return fallback;
+  }
+}
+
 function normalizeGoogleServiceConfig(raw) {
   const client = raw?.client?.[0];
   const project = raw?.project_info;
@@ -52,9 +67,7 @@ async function resolveConfig() {
   const cfg = window?.FIREBASE_CONFIG || window?.firebaseConfig;
   if (cfg?.apiKey) return cfg;
 
-  if (!configPromise) {
-    configPromise = loadConfigFromGoogleService();
-  }
+  if (!configPromise) configPromise = loadConfigFromGoogleService();
 
   try {
     return await configPromise;
@@ -78,15 +91,23 @@ export async function ensureFirebase() {
 export async function sendEmailOtp(email, context = {}) {
   const { auth } = await ensureFirebase();
 
+  const baseUrl = getContinueBaseUrl();
+  const url = new URL(`${baseUrl}/apps/login/`);
+
+  url.searchParams.set("role", context.role || "CLIENT");
+  if (context.docType) url.searchParams.set("docType", context.docType);
+  if (context.docNumber) url.searchParams.set("doc", context.docNumber);
+  if (context.template) url.searchParams.set("tpl", context.template);
+
   const actionCodeSettings = {
-    url:
-      `${window.location.origin}/apps/login/` +
-      `?role=${encodeURIComponent(context.role || "CLIENT")}` +
-      `${context.docType ? `&docType=${encodeURIComponent(context.docType)}` : ""}` +
-      `${context.docNumber ? `&doc=${encodeURIComponent(context.docNumber)}` : ""}` +
-      `${context.template ? `&tpl=${encodeURIComponent(context.template)}` : ""}`,
+    url: url.toString(),
     handleCodeInApp: true
   };
+
+  const isLocalhost = window?.location?.hostname === "localhost";
+  if (isLocalhost) {
+    console.debug("[Firebase] continue URL", actionCodeSettings.url);
+  }
 
   await sendSignInLinkToEmail(auth, email, actionCodeSettings);
   localStorage.setItem("lw_last_email", email);
@@ -96,21 +117,27 @@ export async function completeEmailOtpSignIn(email, otpCode) {
   const { auth } = await ensureFirebase();
   const currentLink = window.location.href;
 
-  let linkToUse = currentLink;
+  // Primary path: user opens email link
+  if (isSignInWithEmailLink(auth, currentLink)) {
+    return signInWithEmailLink(auth, email, currentLink);
+  }
 
-  if (!isSignInWithEmailLink(auth, currentLink) && otpCode) {
-    const url = new URL(window.location.origin + "/apps/login/");
+  // Optional fallback path: allow user to paste oobCode manually (advanced/debug)
+  // Note: Firebase Email Link biasanya tidak memberi OTP 6 digit; ini hanya fallback teknis.
+  if (otpCode) {
+    const url = new URL(`${getContinueBaseUrl()}/apps/login/`);
     url.searchParams.set("oobCode", otpCode);
     url.searchParams.set("mode", "signIn");
-    url.searchParams.set("apiKey", auth.config.apiKey);
-    linkToUse = url.toString();
+    url.searchParams.set("apiKey", auth.app.options.apiKey);
+
+    const linkToUse = url.toString();
+    if (!isSignInWithEmailLink(auth, linkToUse)) {
+      throw new Error("Kode OTP tidak valid. Gunakan tautan dari email untuk verifikasi.");
+    }
+    return signInWithEmailLink(auth, email, linkToUse);
   }
 
-  if (!isSignInWithEmailLink(auth, linkToUse)) {
-    throw new Error("Link OTP tidak valid. Gunakan tautan dari email atau tempel kode OTP yang benar.");
-  }
-
-  return signInWithEmailLink(auth, email, linkToUse);
+  throw new Error("Link OTP tidak ditemukan. Buka tautan dari email untuk verifikasi.");
 }
 
 export async function signOutFirebase() {
@@ -118,24 +145,12 @@ export async function signOutFirebase() {
   await signOut(auth);
 }
 
-export function getFirebaseAuth() {
-  // SENGAJA sync agar kompatibel dengan guard (auth.currentUser)
-  // Firebase Auth akan ter-initialize oleh import firebase-app/auth di index.html
-  if (!firebaseAuth) {
-    const cfg = window?.FIREBASE_CONFIG || window?.firebaseConfig;
-    if (!cfg?.apiKey) {
-      // fallback: init async via ensureFirebase bila config belum siap
-      // tetapi tetap kembalikan auth setelah init selesai melalui ensureFirebase() di caller lain
-      throw new Error("Firebase belum siap. Pastikan firebase-config.js sudah termuat.");
-    }
-    firebaseApp = getApps().length ? getApps()[0] : initializeApp(cfg);
-    firebaseAuth = getAuth(firebaseApp);
-  }
-  return firebaseAuth;
+export async function getFirebaseAuth() {
+  const { auth } = await ensureFirebase();
+  return auth;
 }
 
-export function hasEmailOtpLink() {
-  // sync check; login page sudah load firebase libs + config
-  const auth = getFirebaseAuth();
+export async function hasEmailOtpLink() {
+  const { auth } = await ensureFirebase();
   return isSignInWithEmailLink(auth, window.location.href);
 }
