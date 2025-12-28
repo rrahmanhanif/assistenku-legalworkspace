@@ -6,14 +6,12 @@
   <title>Dashboard Client | Assistenku Legal</title>
   <link rel="stylesheet" href="/assets/css/app.css" />
 
-  <!-- Firebase -->
   <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 
-  <!-- Access Control -->
   <script type="module">
     import { requirePortalAccess } from "../shared/access.js";
     requirePortalAccess("CLIENT", "IPL");
@@ -25,9 +23,7 @@
     <div>
       <p class="eyebrow">Akses Client</p>
       <h1>Command Center Legal</h1>
-      <p class="muted">
-        Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.
-      </p>
+      <p class="muted">Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.</p>
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
@@ -68,13 +64,16 @@
               <th>Aksi</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            <!-- Diisi via script -->
+          </tbody>
         </table>
       </div>
     </section>
 
     <section class="card">
       <h3>Invoice</h3>
+
       <div class="responsive-table">
         <table id="invoiceTable">
           <thead>
@@ -87,9 +86,12 @@
               <th>Aksi</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            <!-- Diisi via script -->
+          </tbody>
         </table>
       </div>
+
       <button id="btnRequestInvoice" class="secondary">Ajukan Invoice</button>
     </section>
   </main>
@@ -97,6 +99,7 @@
   <script type="module">
     import { signOutFirebase } from "../shared/firebase.js";
 
+    // Demo data (nanti diganti query Supabase)
     const splRows = [
       { number: "SPL-2024-011", mitra: "CV Mitra Kontraktual", status: "FINAL", template: "03-spl.html", hash: "bb2a...c13" },
       { number: "SPL-2024-012", mitra: "PT Sukses Bersama", status: "ACTIVE", template: "06-lembar-kinerja.html", hash: "-" },
@@ -104,9 +107,9 @@
     ];
 
     const privyItems = [
-      { title: "Dokumen dikirim", status: "sent" },
-      { title: "Ditandatangani Mitra", status: "signed" },
-      { title: "Menunggu Client", status: "pending" }
+      { title: "Dokumen dikirim", status: "sent", desc: "Menunggu penerimaan signer." },
+      { title: "Ditandatangani Mitra", status: "signed", desc: "Mitra telah menandatangani dokumen." },
+      { title: "Ditandatangani Client", status: "pending", desc: "Menunggu tanda tangan client." }
     ];
 
     const evidenceItems = [
@@ -120,34 +123,37 @@
     ];
 
     function pillStatus(status) {
-      return `<span class="pill ${status.toLowerCase()}">${status}</span>`;
+      return `<span class="pill ${String(status).toLowerCase()}">${status}</span>`;
     }
 
     function renderSPL() {
       const tbody = document.querySelector("#splTable tbody");
       tbody.innerHTML = "";
-      splRows.forEach(r => {
+      splRows.forEach((r) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${r.number}</td>
           <td>${r.mitra}</td>
           <td>${pillStatus(r.status)}</td>
           <td>${r.hash}</td>
-          <td>
-            <button data-action="preview" data-template="${r.template}">Preview</button>
-            <button data-action="open" data-number="${r.number}">Buka</button>
+          <td class="actions">
+            <button class="secondary" data-action="preview" data-template="${r.template}">Preview</button>
+            <button data-action="open" data-number="${r.number}">Detail</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+
+      const statusEl = document.getElementById("splStatus");
+      if (statusEl) statusEl.textContent = splRows[0]?.status || "-";
     }
 
     function renderPrivy() {
       const ul = document.getElementById("privyTimeline");
       ul.innerHTML = "";
-      privyItems.forEach(i => {
+      privyItems.forEach((p) => {
         const li = document.createElement("li");
-        li.textContent = i.title;
+        li.innerHTML = `<strong>${p.title}</strong><div class="muted">${p.desc}</div>`;
         ul.appendChild(li);
       });
     }
@@ -155,9 +161,9 @@
     function renderEvidence() {
       const ul = document.getElementById("evidenceList");
       ul.innerHTML = "";
-      evidenceItems.forEach(e => {
+      evidenceItems.forEach((e) => {
         const li = document.createElement("li");
-        li.textContent = `${e.title} (${e.status})`;
+        li.textContent = `${e.title} • ${e.doc} • ${e.status}`;
         ul.appendChild(li);
       });
     }
@@ -165,7 +171,7 @@
     function renderInvoices() {
       const tbody = document.querySelector("#invoiceTable tbody");
       tbody.innerHTML = "";
-      invoiceItems.forEach(i => {
+      invoiceItems.forEach((i) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${i.id}</td>
@@ -173,9 +179,9 @@
           <td>${pillStatus(i.status)}</td>
           <td>${i.method}</td>
           <td>${i.date}</td>
-          <td>
-            <button class="secondary">Unduh PDF</button>
-            <button>Detail</button>
+          <td class="actions">
+            <button class="secondary" data-action="download-invoice" data-id="${i.id}">Unduh PDF</button>
+            <button data-action="invoice-detail" data-id="${i.id}">Detail</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -183,17 +189,55 @@
     }
 
     function attachEvents() {
-      document.getElementById("btnRefresh").onclick = () => {
+      document.getElementById("btnRefresh")?.addEventListener("click", () => {
         renderSPL();
         renderPrivy();
         renderEvidence();
         renderInvoices();
-      };
+      });
 
-      document.getElementById("logoutBtn").onclick = async () => {
+      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
         await signOutFirebase();
         window.location.href = "/";
-      };
+      });
+
+      document.getElementById("btnSendToPrivy")?.addEventListener("click", () => {
+        alert("Dokumen akan dikirim ke workflow PrivyID (PROD) setelah integrasi API aktif.");
+      });
+
+      document.getElementById("btnOpenEvidence")?.addEventListener("click", () => {
+        alert("Buka daftar evidence / lembar kinerja harian (read-only) untuk validasi pembayaran.");
+      });
+
+      document.getElementById("btnRequestInvoice")?.addEventListener("click", () => {
+        alert("Ajukan invoice berdasarkan IPL/SPL digital yang sah.");
+      });
+
+      document.querySelector("#splTable tbody")?.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+
+        if (action === "preview") {
+          alert(`Preview template: ${btn.dataset.template}`);
+        }
+        if (action === "open") {
+          alert(`Buka detail SPL: ${btn.dataset.number}`);
+        }
+      });
+
+      document.querySelector("#invoiceTable tbody")?.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        if (action === "download-invoice") {
+          alert(`Unduh PDF invoice: ${btn.dataset.id}`);
+        }
+        if (action === "invoice-detail") {
+          alert(`Detail invoice: ${btn.dataset.id}`);
+        }
+      });
     }
 
     renderSPL();
