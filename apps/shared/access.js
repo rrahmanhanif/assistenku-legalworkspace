@@ -15,7 +15,7 @@ const templateMap = {
   ]
 };
 
-const requiredDocType = {
+export const requiredDocType = {
   CLIENT: "IPL",
   ADMIN: "IPL",
   MITRA: "SPL"
@@ -29,7 +29,7 @@ export function bindTemplateOptions(selectEl, type) {
   if (!selectEl) return;
   const items = getTemplatesByType(type);
   selectEl.innerHTML = items
-    .map(item => `<option value="${item.file}">${item.label}</option>`)
+    .map((item) => `<option value="${item.file}">${item.label}</option>`)
     .join("");
 }
 
@@ -44,20 +44,14 @@ export function downloadTemplateFile(templateFile, suggestedName = templateFile)
 }
 
 export function savePortalSession({ role, docType, templateFile, documentId }) {
-  const payload = {
-    role,
-    docType,
-    templateFile,
-    documentId,
-    timestamp: Date.now()
-  };
+  const payload = { role, docType, templateFile, documentId, timestamp: Date.now() };
   localStorage.setItem("lw_portal_session", JSON.stringify(payload));
 }
 
 export function getPortalSession() {
   try {
     return JSON.parse(localStorage.getItem("lw_portal_session"));
-  } catch {
+  } catch (err) {
     return null;
   }
 }
@@ -67,6 +61,7 @@ export function clearPortalSession() {
 }
 
 export async function fetchProfileRole() {
+  // Dengan OTP Firebase, role disimpan di localStorage melalui sesi portal.
   const session = getPortalSession();
   return session?.role || null;
 }
@@ -85,14 +80,11 @@ export function requirePortalAccess(role, docType) {
 
 export function renderBlankTemplateList(container) {
   if (!container) return;
-  const allTemplates = [
-    ...templateMap.IPL,
-    ...templateMap.SPL,
-    ...templateMap.OTHER
-  ];
 
+  const allTemplates = [...templateMap.IPL, ...templateMap.SPL, ...templateMap.OTHER];
   container.innerHTML = "";
-  allTemplates.forEach(tpl => {
+
+  allTemplates.forEach((tpl) => {
     const item = document.createElement("div");
     item.className = "doc-card";
     item.innerHTML = `
@@ -103,7 +95,7 @@ export function renderBlankTemplateList(container) {
     container.appendChild(item);
   });
 
-  container.addEventListener("click", ev => {
+  container.addEventListener("click", (ev) => {
     const btn = ev.target.closest("button[data-template]");
     if (!btn) return;
     downloadTemplateFile(btn.dataset.template);
