@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Admin | LegalWorkspace</title>
   <link rel="stylesheet" href="/assets/css/app.css" />
-
-  <!-- Firebase config (wajib ada di server) -->
   <script src="/assets/firebase-config.js"></script>
-
-  <!-- Firebase Web SDK (CDN, ESM) -->
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
@@ -35,35 +31,32 @@
         <h2>Client & Mitra Terproteksi</h2>
         <p class="muted">Setiap portal wajib login menggunakan IPL/SPL digital resmi sebelum masuk.</p>
       </article>
-
       <article class="card">
         <p class="eyebrow">Invoice</p>
         <h2 id="invoiceCount">-</h2>
         <p class="muted">Pembayaran ke mitra & penagihan ke client hanya aktif jika bukti kinerja ada.</p>
       </article>
-
       <article class="card">
-        <p class="eyebrow">Evidence</p>
-        <h2>-</h2>
-        <p class="muted">Bukti kinerja harian menjadi dasar invoice dan approval.</p>
+        <p class="eyebrow">Audit</p>
+        <h2>Append-only</h2>
+        <p class="muted">Seluruh aksi penting dicatat: registry, login, submit, approve, tanda tangan, export.</p>
       </article>
     </section>
 
-    <section class="card" style="margin-top: 18px;">
-      <div class="row" style="justify-content: space-between; align-items: center;">
+    <section class="card">
+      <div class="card-header">
         <div>
-          <p class="eyebrow">Dokumen</p>
-          <h2>Daftar Dokumen (IPL / SPL)</h2>
-          <p id="docLegend" class="muted"></p>
+          <h2>Dokumen Terdaftar</h2>
+          <p class="muted" id="docLegend"></p>
         </div>
       </div>
-
-      <div class="table-wrap" style="margin-top: 12px;">
-        <table id="docTable" class="table">
+      <div class="table-wrap">
+        <table id="docTable">
           <thead>
             <tr>
               <th>Tipe</th>
-              <th>Nomor / Pemilik</th>
+              <th>Nomor</th>
+              <th>Pemilik</th>
               <th>Status</th>
               <th>Hash</th>
               <th>Aksi</th>
@@ -74,58 +67,57 @@
       </div>
     </section>
 
-    <section class="card" style="margin-top: 18px;">
-      <div class="row" style="justify-content: space-between; align-items: center;">
-        <div>
-          <p class="eyebrow">Invoice</p>
-          <h2>Daftar Invoice</h2>
-          <p class="muted">Generate PDF legal-grade setelah dokumen & evidence terpenuhi.</p>
-        </div>
-        <div class="row" style="gap: 10px;">
+    <section class="grid two">
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <h2>Invoice</h2>
+            <p class="muted">Generate legal-grade PDF dari dokumen yang terkunci.</p>
+          </div>
           <button id="btnAddInvoice" class="secondary">Tambah Invoice</button>
         </div>
-      </div>
 
-      <div class="table-wrap" style="margin-top: 12px;">
-        <table id="invoiceTable" class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Owner</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Hash</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+        <div class="table-wrap">
+          <table id="invoiceTable">
+            <thead>
+              <tr>
+                <th>Nomor</th>
+                <th>Client</th>
+                <th>Periode</th>
+                <th>Status</th>
+                <th>Nilai</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <h2>Bukti Kinerja Harian</h2>
+            <p class="muted">Bukti submit mitra dan status persetujuan client.</p>
+          </div>
+          <button id="btnUploadEvidence" class="secondary">Unggah Bukti</button>
+        </div>
+
+        <ul id="evidenceList" class="list"></ul>
+      </article>
     </section>
 
-    <section class="card" style="margin-top: 18px;">
-      <div class="row" style="justify-content: space-between; align-items: center;">
+    <section class="card">
+      <div class="card-header">
         <div>
-          <p class="eyebrow">Evidence</p>
-          <h2>Bukti Kinerja Harian</h2>
-          <p class="muted">Evidence menandai data siap dibayar dan menjadi jejak audit.</p>
-        </div>
-        <div class="row" style="gap: 10px;">
-          <button id="btnUploadEvidence" class="secondary">Unggah Evidence</button>
+          <h2>Unduhan Template Kosong</h2>
+          <p class="muted">Template original (tanpa mengubah teks legal).</p>
         </div>
       </div>
-
-      <div id="evidenceList" style="margin-top: 12px;"></div>
-    </section>
-
-    <section class="card" style="margin-top: 18px;">
-      <p class="eyebrow">Template</p>
-      <h2>Unduh Template Kosong</h2>
-      <p class="muted">Template digunakan untuk pengisian awal sebelum dokumen dikunci dan di-hash.</p>
-      <div id="templateDownloads" style="margin-top: 12px;"></div>
+      <div id="templateDownloads" class="grid three"></div>
     </section>
   </main>
 
-  <script type="module" src="./admin.js"></script>
+  <script type="module" src="/apps/admin/admin.js"></script>
 </body>
 </html>
