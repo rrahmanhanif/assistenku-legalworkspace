@@ -15,7 +15,7 @@ const templateMap = {
   ]
 };
 
-export const requiredDocType = {
+const requiredDocType = {
   CLIENT: "IPL",
   ADMIN: "IPL",
   MITRA: "SPL"
@@ -26,7 +26,6 @@ export function getTemplatesByType(type) {
 }
 
 export function bindTemplateOptions(selectEl, type) {
-  if (!selectEl) return;
   const items = getTemplatesByType(type);
   selectEl.innerHTML = items
     .map((item) => `<option value="${item.file}">${item.label}</option>`)
@@ -48,10 +47,16 @@ export function savePortalSession({ role, docType, templateFile, documentId }) {
   localStorage.setItem("lw_portal_session", JSON.stringify(payload));
 }
 
+export async function fetchProfileRole() {
+  // Dengan OTP Firebase, role disimpan di localStorage melalui sesi portal.
+  const session = getPortalSession();
+  return session?.role || null;
+}
+
 export function getPortalSession() {
   try {
     return JSON.parse(localStorage.getItem("lw_portal_session"));
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -60,16 +65,12 @@ export function clearPortalSession() {
   localStorage.removeItem("lw_portal_session");
 }
 
-export async function fetchProfileRole() {
-  // Dengan OTP Firebase, role disimpan di localStorage melalui sesi portal.
-  const session = getPortalSession();
-  return session?.role || null;
-}
-
 export function requirePortalAccess(role, docType) {
   const session = getPortalSession();
   const requiredType = docType || requiredDocType[role];
   const matchedRole = session?.role === role;
+
+  // ADMIN tidak wajib memiliki docType match (karena tidak input dokumen).
   const matchedDoc = role === "ADMIN" || session?.docType === requiredType;
 
   if (!matchedRole || !matchedDoc) {
@@ -79,8 +80,6 @@ export function requirePortalAccess(role, docType) {
 }
 
 export function renderBlankTemplateList(container) {
-  if (!container) return;
-
   const allTemplates = [...templateMap.IPL, ...templateMap.SPL, ...templateMap.OTHER];
   container.innerHTML = "";
 
