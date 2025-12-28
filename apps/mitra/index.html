@@ -7,12 +7,14 @@
 
   <link rel="stylesheet" href="/assets/css/app.css" />
 
+  <!-- Firebase Config -->
   <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 
+  <!-- Guard Role -->
   <script type="module">
     import { requireRole } from "../shared/auth-guard.js";
     requireRole("MITRA");
@@ -39,36 +41,57 @@
   <main class="container">
     <section class="grid three">
       <article class="card highlight">
-        <p class="eyebrow">Status SPL</p>
-        <h2 id="splStatus">-</h2>
+        <p class="eyebrow">SPL Aktif</p>
+        <h2 id="splActive">-</h2>
+        <p class="muted">Nomor SPL yang sedang diproses.</p>
+        <div class="card-actions">
+          <button id="btnOpenDaily">Isi Kinerja Harian</button>
+          <button id="btnUploadEvidence" class="secondary">Unggah Bukti</button>
+        </div>
       </article>
 
       <article class="card">
-        <p class="eyebrow">Kinerja Harian</p>
-        <ul id="dailyPerformance"></ul>
-        <button id="btnAddPerformance">Tambah Kinerja</button>
+        <p class="eyebrow">Status Legal</p>
+        <h2 id="legalStatus">-</h2>
+        <p class="muted">LOCKED / FINAL / ACTIVE sesuai workflow.</p>
+        <div id="statusTimeline" class="list">
+          <!-- diisi via script -->
+        </div>
       </article>
 
       <article class="card">
-        <p class="eyebrow">Evidence</p>
-        <ul id="evidenceList"></ul>
-        <button id="btnUploadEvidence" class="secondary">Unggah Bukti</button>
+        <p class="eyebrow">Audit Trail</p>
+        <h2>Ringkas</h2>
+        <p class="muted">Pencatatan aksi penting untuk bukti.</p>
+        <div id="auditList" class="list">
+          <!-- diisi via script -->
+        </div>
       </article>
     </section>
 
     <section class="card">
-      <h3>Daftar SPL</h3>
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Daftar SPL</p>
+          <h2>Dokumen &amp; Kinerja</h2>
+          <p class="muted">Lihat SPL, status, dan akses form kinerja harian.</p>
+        </div>
+      </div>
+
       <div class="responsive-table">
         <table id="splTable">
           <thead>
             <tr>
-              <th>Nomor</th>
+              <th>Nomor SPL</th>
               <th>Client</th>
               <th>Status</th>
+              <th>Terakhir Update</th>
               <th>Aksi</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            <!-- diisi via script -->
+          </tbody>
         </table>
       </div>
     </section>
@@ -77,17 +100,135 @@
   <script type="module">
     import { signOutFirebase } from "../shared/firebase.js";
 
+    // Demo data (ganti dengan data produksi)
+    const splRows = [
+      { number: "SPL-2024-011", client: "PT Alfa Energi", status: "ACTIVE", updated_at: "2024-09-01 10:22" },
+      { number: "SPL-2024-012", client: "PT Beta Logistik", status: "DRAFT", updated_at: "2024-09-01 09:10" }
+    ];
+
+    const timeline = [
+      { step: "Draft", status: "done" },
+      { step: "Submit Kinerja", status: "active" },
+      { step: "LOCKED_BY_SYSTEM", status: "pending" },
+      { step: "Approval Client", status: "pending" },
+      { step: "FINAL", status: "pending" }
+    ];
+
+    const auditEntries = [
+      { at: "2024-09-01 10:22", msg: "Mitra membuka SPL-2024-011" },
+      { at: "2024-09-01 10:23", msg: "Mitra mengisi kinerja harian (draft)" }
+    ];
+
+    function pillStatus(status) {
+      const s = String(status || "-").toLowerCase();
+      let variant = "muted";
+      if (s.includes("final")) variant = "success";
+      if (s.includes("active") || s.includes("submit")) variant = "warning";
+      if (s.includes("locked")) variant = "danger";
+      if (s.includes("draft")) variant = "muted";
+      return `<span class="pill ${variant}">${status}</span>`;
+    }
+
+    function renderTopCards() {
+      const splActive = document.getElementById("splActive");
+      const legalStatus = document.getElementById("legalStatus");
+      splActive.textContent = splRows?.[0]?.number || "-";
+      legalStatus.textContent = splRows?.[0]?.status || "-";
+    }
+
+    function renderTimeline() {
+      const box = document.getElementById("statusTimeline");
+      if (!box) return;
+      box.innerHTML = "";
+      timeline.forEach((t) => {
+        const div = document.createElement("div");
+        div.className = "list-item";
+        div.innerHTML = `
+          <div class="list-item-main">
+            <strong>${t.step}</strong>
+          </div>
+          <div>${pillStatus(t.status)}</div>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    function renderAudit() {
+      const box = document.getElementById("auditList");
+      if (!box) return;
+      box.innerHTML = "";
+      auditEntries.forEach((a) => {
+        const div = document.createElement("div");
+        div.className = "list-item";
+        div.innerHTML = `
+          <div class="list-item-main">
+            <strong>${a.msg}</strong>
+            <p class="muted">${a.at}</p>
+          </div>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    function renderSPLTable() {
+      const tbody = document.querySelector("#splTable tbody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      splRows.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.number}</td>
+          <td>${row.client}</td>
+          <td>${pillStatus(row.status)}</td>
+          <td>${row.updated_at}</td>
+          <td class="actions">
+            <button class="secondary" data-action="daily" data-number="${row.number}">Isi Kinerja</button>
+            <button data-action="detail" data-number="${row.number}">Detail</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     function attachEvents() {
       document.getElementById("btnRefresh")?.addEventListener("click", () => {
-        alert("Data kinerja disegarkan (placeholder).");
+        renderTopCards();
+        renderTimeline();
+        renderAudit();
+        renderSPLTable();
       });
 
       document.getElementById("logoutBtn")?.addEventListener("click", async () => {
         await signOutFirebase();
-        window.location.href = "/";
+        window.location.href = "/apps/login/";
+      });
+
+      document.getElementById("btnOpenDaily")?.addEventListener("click", () => {
+        alert("Buka form kinerja harian (Mitra) — integrasi tahap 1.");
+      });
+
+      document.getElementById("btnUploadEvidence")?.addEventListener("click", () => {
+        alert("Unggah bukti kerja (foto timemark) — integrasi tahap 1.");
+      });
+
+      document.querySelector("#splTable tbody")?.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const number = btn.dataset.number;
+        if (action === "daily") {
+          alert(`Isi kinerja harian untuk: ${number}`);
+        } else if (action === "detail") {
+          alert(`Buka detail SPL: ${number}`);
+        }
       });
     }
 
+    renderTopCards();
+    renderTimeline();
+    renderAudit();
+    renderSPLTable();
     attachEvents();
   </script>
 </body>
