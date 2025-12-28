@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "320243806907",
+    "firebase_url": "https://assistenku-8ef85-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "assistenku-8ef85",
+    "storage_bucket": "assistenku-8ef85.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320243806907:android:4da9a2746310c1edee2f9e",
+        "android_client_info": {
+          "package_name": "Mitra.assistenku"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "320243806907-198rs9idng6us0u2qdjve67edd4c1m2j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKVpQG18yCgZqpwaSUYCw45_pPQYZr40A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320243806907-198rs9idng6us0u2qdjve67edd4c1m2j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320243806907:android:febe9b1581855ca6ee2f9e",
+        "android_client_info": {
+          "package_name": "app.assistenku"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "320243806907-198rs9idng6us0u2qdjve67edd4c1m2j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKVpQG18yCgZqpwaSUYCw45_pPQYZr40A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320243806907-198rs9idng6us0u2qdjve67edd4c1m2j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320243806907:android:83bafb526f73fca7ee2f9e",
+        "android_client_info": {
+          "package_name": "legalworkspace.assistenku"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "320243806907-198rs9idng6us0u2qdjve67edd4c1m2j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKVpQG18yCgZqpwaSUYCw45_pPQYZr40A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320243806907-198rs9idng6us0u2qdjve67edd4c1m2j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
