@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akses Client | LegalWorkspace</title>
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <style>
+    body { background: #f8fafc; }
+    .auth-card { max-width: 480px; margin: 60px auto; padding: 24px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    .auth-card h1 { margin: 0 0 6px 0; }
+    .auth-card p { margin: 0 0 16px 0; color: #475467; }
+    label { display: block; margin: 12px 0 6px; font-weight: 600; color: #0f172a; }
+    input, select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; font-size: 14px; }
+    .actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    button { padding: 12px 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+    .secondary { background: #eef2ff; color: #0a58ff; }
+    .primary { background: #0a58ff; color: #fff; }
+    .muted { color: #6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <p class="eyebrow">Portal Client</p>
+    <h1>Akses dengan IPL Digital</h1>
+    <p>Silakan isi email perusahaan, pilih dokumen IPL digital, lalu masukkan nomor IPL untuk signup & signin.</p>
+
+    <label for="template">IPL Digital</label>
+    <select id="template" data-template></select>
+    <button class="secondary" data-action="download-template" style="margin-top: 8px; width: 100%;">Unduh IPL Kosong</button>
+
+    <label for="docId">Nomor IPL</label>
+    <input id="docId" data-doc-id placeholder="Contoh: IPL-2024-009" />
+
+    <label for="email">Email</label>
+    <input id="email" type="email" data-email placeholder="email@client.com" />
+
+    <label for="otp">OTP</label>
+    <input id="otp" data-otp placeholder="Masukkan OTP 6 digit" />
+
+    <div class="actions">
+      <button class="secondary" data-action="send-otp">Kirim OTP</button>
+      <button class="primary" data-action="verify">Verifikasi & Masuk</button>
+    </div>
+
+    <p class="muted">Hanya client dengan IPL digital yang sah yang bisa melanjutkan ke dashboard.</p>
+  </div>
+
+  <script type="module">
+    import { initPortalAuth } from "../shared/portal-auth.js";
+    initPortalAuth({ role: "CLIENT", redirect: "/apps/client/" });
+  </script>
+</body>
+</html>
