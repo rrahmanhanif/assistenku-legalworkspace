@@ -1,5 +1,3 @@
-import { getFirebaseAuth } from "./firebase.js";
-
 const templateMap = {
   IPL: [
     { file: "01-ipl.html", label: "Perjanjian Induk Layanan (IPL)" },
@@ -44,27 +42,72 @@ export function downloadTemplateFile(templateFile, suggestedName = templateFile)
   link.remove();
 }
 
+/**
+ * Standar sesi portal LegalWorkspace.
+ * Key: lw_portal_session
+ * Shape:
+ * { role, docType, templateFile, documentId, timestamp }
+ */
 export function savePortalSession({ role, docType, templateFile, documentId }) {
-  const payload = { role, docType, templateFile, documentId, timestamp: Date.now() };
+  const payload = {
+    role,
+    docType,
+    templateFile: templateFile || null,
+    documentId: documentId || null,
+    timestamp: Date.now()
+  };
   localStorage.setItem("lw_portal_session", JSON.stringify(payload));
 }
 
+function tryMigrateLegacyIplAccess() {
+  // Legacy key dari login.js sebelumnya: "iplAccess"
+  // Shape legacy:
+  // { role, template, documentId, preview, at }
+  try {
+    const legacyRaw = localStorage.getItem("iplAccess");
+    if (!legacyRaw) return null;
+
+    const legacy = JSON.parse(legacyRaw);
+    if (!legacy?.role) return null;
+
+    const role = legacy.role;
+    const docType = requiredDocType[role] || null;
+
+    const migrated = {
+      role,
+      docType,
+      templateFile: legacy.template || null,
+      documentId: legacy.documentId || legacy.documentId === "" ? legacy.documentId : (legacy.documentId ?? legacy.documentId),
+      timestamp: Date.now()
+    };
+
+    // Dalam legacy Anda, field nomor dokumen kadang disimpan di `documentId` atau `documentId` tidak ada sama sekali.
+    // Kita coba ambil dari kemungkinan lain:
+    if (!migrated.documentId) {
+      migrated.documentId = legacy.documentId || legacy.documentId || legacy.documentId || legacy.documentId || null;
+    }
+
+    // Simpan ke standar baru
+    localStorage.setItem("lw_portal_session", JSON.stringify(migrated));
+    return migrated;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchProfileRole() {
+  // Dengan OTP Firebase, role disimpan di localStorage melalui sesi portal.
   const session = getPortalSession();
   return session?.role || null;
 }
 
 export function getPortalSession() {
   try {
-    return JSON.parse(localStorage.getItem("lw_portal_session"));
-  } catch {
-    return null;
-  }
-}
+    const raw = localStorage.getItem("lw_portal_session");
+    if (raw) return JSON.parse(raw);
 
-function getIplAccessFallback() {
-  try {
-    return JSON.parse(localStorage.getItem("iplAccess"));
+    // Fallback: coba migrasi dari "iplAccess" supaya tidak memutus user yang sudah login
+    return tryMigrateLegacyIplAccess();
   } catch {
     return null;
   }
@@ -72,78 +115,25 @@ function getIplAccessFallback() {
 
 export function clearPortalSession() {
   localStorage.removeItem("lw_portal_session");
-  localStorage.removeItem("iplAccess");
-  localStorage.removeItem("lw_pending_login");
-  localStorage.removeItem("lw_last_email");
 }
 
-/**
- * Guard portal:
- * 1) Pastikan Firebase Auth sudah siap (menunggu sampai 5 detik)
- * 2) Validasi role/docType dari session localStorage
- */
 export function requirePortalAccess(role, docType) {
-  const auth = getFirebaseAuth();
-
+  const session = getPortalSession();
   const requiredType = docType || requiredDocType[role];
+  const matchedRole = session?.role === role;
 
-  const redirectToLogin = (msg) => {
-    if (msg) console.warn(msg);
+  // ADMIN tidak wajib docType (sesuai patch Anda)
+  const matchedDoc = role === "ADMIN" || session?.docType === requiredType;
+
+  if (!matchedRole || !matchedDoc) {
     alert("Akses tidak valid. Silakan login sesuai dokumen digital yang dipersyaratkan.");
-    const url = new URL(window.location.origin + "/apps/login/");
-    url.searchParams.set("role", role);
-    window.location.replace(url.toString());
-  };
-
-  const checkSession = () => {
-    const session = getPortalSession();
-    const fallback = getIplAccessFallback();
-
-    // Ambil role/docType dari session utama atau fallback
-    const sessionRole = session?.role || fallback?.role || null;
-    const sessionDocType = session?.docType || null; // fallback iplAccess tidak menyimpan docType
-    const hasRole = sessionRole === role;
-
-    // ADMIN tidak wajib docType match
-    const matchedDoc =
-      role === "ADMIN" ||
-      sessionDocType === requiredType ||
-      // fallback: jika sessionDocType tidak ada, minimal pastikan dokumen ada untuk non-admin
-      (!!fallback?.documentId && !!fallback?.template);
-
-    if (!hasRole || !matchedDoc) {
-      return redirectToLogin("Role/docType tidak match atau sesi tidak ditemukan.");
-    }
-
-    // ✅ Lolos
-    return true;
-  };
-
-  const timeoutMs = 5000;
-  const start = Date.now();
-
-  const tick = () => {
-    const user = auth.currentUser;
-
-    // tunggu auth siap
-    if (!user) {
-      if (Date.now() - start > timeoutMs) {
-        return redirectToLogin("Firebase auth tidak siap / belum login.");
-      }
-      return setTimeout(tick, 120);
-    }
-
-    // auth siap → cek session localStorage
-    checkSession();
-  };
-
-  tick();
+    window.location.href = "/";
+  }
 }
 
 export function renderBlankTemplateList(container) {
   const allTemplates = [...templateMap.IPL, ...templateMap.SPL, ...templateMap.OTHER];
   container.innerHTML = "";
-
   allTemplates.forEach((tpl) => {
     const item = document.createElement("div");
     item.className = "doc-card";
