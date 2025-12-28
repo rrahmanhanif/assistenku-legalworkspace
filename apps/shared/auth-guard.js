@@ -17,7 +17,8 @@ function getIplAccess() {
 }
 
 export async function requireRole(expectedRole) {
-  const auth = getFirebaseAuth();
+  // 1) Pastikan user sudah login via Firebase
+  const auth = await getFirebaseAuth();
   const user = auth.currentUser;
 
   if (!user) {
@@ -25,6 +26,7 @@ export async function requireRole(expectedRole) {
     return;
   }
 
+  // Admin: wajib pakai email resmi
   if (expectedRole === "ADMIN" && user.email !== ADMIN_EMAIL) {
     alert("Akun admin wajib menggunakan email resmi.");
     await signOutFirebase();
@@ -32,7 +34,9 @@ export async function requireRole(expectedRole) {
     return;
   }
 
+  // 2) Pastikan local IPL access ada (verifikasi pilihan dokumen IPL/SPL)
   const iplAccess = getIplAccess();
+
   const sameRole = iplAccess?.role === expectedRole;
 
   const hasTemplate =
@@ -44,7 +48,7 @@ export async function requireRole(expectedRole) {
     (typeof iplAccess?.documentId === "string" && iplAccess.documentId.length > 0);
 
   if (!sameRole || !hasTemplate || !hasDocNumber) {
-    alert("Verifikasi IPL / SPL digital diperlukan ulang.");
+    alert("Verifikasi IPL/SPL digital diperlukan ulang.");
     await signOutFirebase();
     redirectToLogin(expectedRole);
   }
