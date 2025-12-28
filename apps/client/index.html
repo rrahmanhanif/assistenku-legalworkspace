@@ -4,24 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Client | Assistenku Legal</title>
-
   <link rel="stylesheet" href="/assets/css/app.css" />
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="../shared/supabase.js"></script>
+
   <script type="module">
-    import { requireRole } from "../shared/auth-guard.js";
-    requireRole("CLIENT");
+    import { requirePortalAccess } from "../shared/access.js";
+    requirePortalAccess("CLIENT", "IPL");
   </script>
 </head>
+
 <body>
   <header>
     <div>
       <p class="eyebrow">Akses Client</p>
       <h1>Command Center Legal</h1>
-      <p class="muted">
-        Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.
-      </p>
+      <p class="muted">Semua SPL, tanda tangan elektronik, hash, dan audit trail dalam satu layar.</p>
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
@@ -34,45 +32,303 @@
       <article class="card highlight">
         <p class="eyebrow">Status SPL</p>
         <h2 id="splStatus">-</h2>
-        <p class="muted">
-          Lifecycle resmi: DRAFT → ACTIVE → FINAL → LOCKED (immutable)
-        </p>
+        <p class="muted">Lifecycle resmi: DRAFT → ACTIVE → FINAL → LOCKED (immutable)</p>
       </article>
 
       <article class="card">
         <p class="eyebrow">PrivyID</p>
         <h2 id="privyStatus">-</h2>
-        <p class="muted">
-          Multi-signer Client & Mitra dengan webhook sent / signed / rejected
-        </p>
+        <p class="muted">Multi-signer Client & Mitra dengan webhook sent/signed/rejected</p>
       </article>
 
       <article class="card">
-        <p class="eyebrow">Dokumen Legal</p>
-        <h2 id="docCount">-</h2>
-        <p class="muted">
-          Dokumen IPL, Addendum, dan SPL aktif
-        </p>
+        <p class="eyebrow">Audit</p>
+        <h2 id="auditStatus">-</h2>
+        <p class="muted">Setiap aksi tervalidasi dan tercatat: order, overtime, payment, withdraw, chat, GPS, evidence</p>
       </article>
     </section>
 
     <section class="card">
       <div class="section-header">
         <div>
-          <p class="eyebrow">Dokumen & Aktivitas</p>
-          <h2>Ringkasan Legal Client</h2>
-          <p class="muted">
-            Semua perubahan tercatat dengan timestamp dan hash.
-          </p>
+          <p class="eyebrow">Dokumen</p>
+          <h2>SPL & Addendum</h2>
+          <p class="muted">Dokumen yang ditandatangani akan memiliki hash dan timestamp, kemudian menjadi FINAL.</p>
+        </div>
+        <div class="pill-group" id="docLegend">
+          <span class="pill draft">DRAFT</span>
+          <span class="pill active">ACTIVE</span>
+          <span class="pill final">FINAL</span>
+          <span class="pill locked">LOCKED</span>
         </div>
       </div>
 
-      <div class="responsive-table" id="clientActivity">
-        <!-- diisi oleh client.js -->
+      <div class="responsive-table">
+        <table id="splTable">
+          <thead>
+            <tr>
+              <th>Nomor SPL</th>
+              <th>Mitra</th>
+              <th>Status</th>
+              <th>Template</th>
+              <th>Hash</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Diisi via script sederhana di bawah -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">E-Sign</p>
+            <h2>PrivyID Workflow</h2>
+            <p class="muted">Client dapat memantau pengiriman dan status tanda tangan dokumen.</p>
+          </div>
+          <button id="btnSendToPrivy" class="secondary">Kirim ke PrivyID</button>
+        </div>
+
+        <div class="doc-grid" id="privyTimeline">
+          <!-- Kartu status workflow -->
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Bukti</p>
+            <h2>Lembar Kinerja Harian</h2>
+            <p class="muted">Evidence menjadi syarat validasi pembayaran dan penyusunan laporan final.</p>
+          </div>
+          <button id="btnOpenEvidence" class="secondary">Lihat Evidence</button>
+        </div>
+
+        <div class="doc-grid" id="evidenceGrid">
+          <!-- Kartu evidence -->
+        </div>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Invoice</p>
+          <h2>Tagihan & Pembayaran</h2>
+          <p class="muted">Invoice dan bukti pembayaran dikelola berdasarkan IPL/SPL digital yang sah.</p>
+        </div>
+        <button id="btnRequestInvoice" class="secondary">Ajukan Invoice</button>
+      </div>
+
+      <div class="responsive-table">
+        <table id="invoiceTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Dokumen</th>
+              <th>Status</th>
+              <th>Metode</th>
+              <th>Tanggal</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Diisi via script -->
+          </tbody>
+        </table>
       </div>
     </section>
   </main>
 
-  <script type="module" src="/apps/client/client.js"></script>
+  <script type="module">
+    import { supabase } from "../shared/supabase.js";
+
+    // Demo data (nanti diganti query Supabase)
+    const splRows = [
+      { number: "SPL-2024-011", mitra: "CV Mitra Kontraktual", status: "FINAL", template: "03-spl.html", hash: "bb2a...c13" },
+      { number: "SPL-2024-012", mitra: "PT Sukses Bersama", status: "ACTIVE", template: "06-lembar-kinerja.html", hash: "-" },
+      { number: "SPL-2024-013", mitra: "Mitra A", status: "DRAFT", template: "03-spl.html", hash: "-" }
+    ];
+
+    const privyItems = [
+      { title: "Dokumen dikirim", status: "sent", desc: "Menunggu penerimaan signer." },
+      { title: "Ditandatangani Mitra", status: "signed", desc: "Mitra telah menandatangani dokumen." },
+      { title: "Ditandatangani Client", status: "pending", desc: "Menunggu tanda tangan client." }
+    ];
+
+    const evidenceItems = [
+      { title: "Lembar Kinerja Harian", doc: "SPL-2024-011", status: "LOCKED" },
+      { title: "Lembar Kinerja Harian", doc: "SPL-2024-012", status: "DRAFT" }
+    ];
+
+    const invoiceItems = [
+      { id: "INV-CL-001", doc: "IPL-2024-009", status: "Menunggu Evidence", method: "Transfer", date: "-" },
+      { id: "INV-CL-002", doc: "SPL-2024-011", status: "Siap Dibayar", method: "Transfer", date: "-" }
+    ];
+
+    function pillStatus(status) {
+      const key = String(status || "").toLowerCase().replace(/\s+/g, "-");
+      return `<span class="pill ${key}">${status}</span>`;
+    }
+
+    function renderSPL() {
+      const tbody = document.querySelector("#splTable tbody");
+      tbody.innerHTML = "";
+      splRows.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.number}</td>
+          <td>${r.mitra}</td>
+          <td>${pillStatus(r.status)}</td>
+          <td><span class="pill neutral">${r.template}</span></td>
+          <td>${r.hash}</td>
+          <td class="actions">
+            <button class="secondary" data-action="preview" data-template="${r.template}">Preview</button>
+            <button data-action="open" data-number="${r.number}">Detail</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update status ringkas
+      const current = splRows.find((x) => x.status === "ACTIVE") || splRows[0];
+      document.getElementById("splStatus").textContent = current ? current.status : "-";
+    }
+
+    function renderPrivy() {
+      const wrap = document.getElementById("privyTimeline");
+      wrap.innerHTML = "";
+      privyItems.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "doc-card";
+        card.innerHTML = `
+          <div class="doc-title">${p.title}</div>
+          <p class="muted">${p.desc}</p>
+          <div class="doc-meta">
+            ${pillStatus(p.status.toUpperCase())}
+          </div>
+        `;
+        wrap.appendChild(card);
+      });
+
+      // Ringkas
+      const signed = privyItems.some((x) => x.status === "signed");
+      document.getElementById("privyStatus").textContent = signed ? "SIGNED" : "PENDING";
+      document.getElementById("auditStatus").textContent = "ON";
+    }
+
+    function renderEvidence() {
+      const wrap = document.getElementById("evidenceGrid");
+      wrap.innerHTML = "";
+      evidenceItems.forEach((e) => {
+        const card = document.createElement("div");
+        card.className = "doc-card";
+        card.innerHTML = `
+          <div class="doc-title">${e.title}</div>
+          <p class="muted">${e.doc}</p>
+          <div class="doc-meta">
+            ${pillStatus(e.status)}
+          </div>
+          <div class="actions" style="margin-top: 10px; gap: 8px;">
+            <button class="secondary" data-action="download-evidence" data-doc="${e.doc}">Unduh</button>
+            <button data-action="view-evidence" data-doc="${e.doc}">Lihat</button>
+          </div>
+        `;
+        wrap.appendChild(card);
+      });
+    }
+
+    function renderInvoices() {
+      const tbody = document.querySelector("#invoiceTable tbody");
+      tbody.innerHTML = "";
+      invoiceItems.forEach((i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i.id}</td>
+          <td>${i.doc}</td>
+          <td>${pillStatus(i.status)}</td>
+          <td>${i.method}</td>
+          <td>${i.date}</td>
+          <td class="actions">
+            <button class="secondary" data-action="download-invoice" data-id="${i.id}">Unduh PDF</button>
+            <button data-action="invoice-detail" data-id="${i.id}">Detail</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function attachEvents() {
+      document.getElementById("btnRefresh").addEventListener("click", () => {
+        renderSPL();
+        renderPrivy();
+        renderEvidence();
+        renderInvoices();
+      });
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        window.location.href = "/";
+      });
+
+      document.getElementById("btnSendToPrivy").addEventListener("click", () => {
+        alert("Dokumen akan dikirim ke workflow PrivyID (PROD) setelah integrasi API aktif.");
+      });
+
+      document.getElementById("btnOpenEvidence").addEventListener("click", () => {
+        alert("Buka daftar evidence / lembar kinerja harian (read-only) untuk validasi pembayaran.");
+      });
+
+      document.getElementById("btnRequestInvoice").addEventListener("click", () => {
+        alert("Ajukan invoice berdasarkan IPL/SPL digital yang sah.");
+      });
+
+      document.querySelector("#splTable tbody").addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === "preview") {
+          alert(`Preview template: ${btn.dataset.template}`);
+        }
+        if (action === "open") {
+          alert(`Buka detail SPL: ${btn.dataset.number}`);
+        }
+      });
+
+      document.getElementById("evidenceGrid").addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === "download-evidence") {
+          alert(`Unduh evidence untuk: ${btn.dataset.doc}`);
+        }
+        if (action === "view-evidence") {
+          alert(`Lihat evidence untuk: ${btn.dataset.doc}`);
+        }
+      });
+
+      document.querySelector("#invoiceTable tbody").addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === "download-invoice") {
+          alert(`Unduh invoice PDF: ${btn.dataset.id}`);
+        }
+        if (action === "invoice-detail") {
+          alert(`Detail invoice: ${btn.dataset.id}`);
+        }
+      });
+    }
+
+    renderSPL();
+    renderPrivy();
+    renderEvidence();
+    renderInvoices();
+    attachEvents();
+  </script>
 </body>
 </html>
