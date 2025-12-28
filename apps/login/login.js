@@ -26,6 +26,7 @@ const templateOptions = {
 let selectedRole = "CLIENT";
 
 function renderTemplateOptions(role) {
+  if (!iplSelect) return;
   iplSelect.innerHTML = "";
   (templateOptions[role] || []).forEach((item) => {
     const option = document.createElement("option");
@@ -66,9 +67,9 @@ async function validateIplTemplate(path) {
   return text.substring(0, 120);
 }
 
-btnSend.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
-  const templatePath = iplSelect.value;
+btnSend?.addEventListener("click", async () => {
+  const email = emailInput?.value.trim();
+  const templatePath = iplSelect?.value;
 
   if (!email) return alert("Email wajib diisi");
   if (!templatePath) return alert("Pilih dokumen IPL terlebih dahulu");
@@ -95,10 +96,10 @@ btnSend.addEventListener("click", async () => {
   }
 });
 
-btnVerify.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
-  const token = otpInput.value.trim();
-  const templatePath = iplSelect.value;
+btnVerify?.addEventListener("click", async () => {
+  const email = emailInput?.value.trim();
+  const token = otpInput?.value.trim();
+  const templatePath = iplSelect?.value;
 
   if (!email || !token) return alert("Email dan OTP wajib diisi");
   if (!templatePath) return alert("Pilih dokumen IPL terlebih dahulu");
@@ -116,6 +117,7 @@ btnVerify.addEventListener("click", async () => {
     const user = data?.user;
     if (!user) throw new Error("User tidak ditemukan");
 
+    // Simpan/selaraskan profil user di tabel profiles
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .upsert(
@@ -131,6 +133,7 @@ btnVerify.addEventListener("click", async () => {
       throw new Error("Role tidak sesuai dengan pilihan portal");
     }
 
+    // Simpan akses lokal agar portal dapat melakukan guard (requirePortalAccess)
     localStorage.setItem(
       "iplAccess",
       JSON.stringify({
@@ -141,6 +144,7 @@ btnVerify.addEventListener("click", async () => {
       })
     );
 
+    // Redirect sesuai role
     if (selectedRole === "CLIENT") {
       window.location.href = "/apps/client/";
     } else if (selectedRole === "MITRA") {
