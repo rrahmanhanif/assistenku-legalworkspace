@@ -1,4 +1,6 @@
-import { supabase } from "./supabase.js";
+import { getFirebaseAuth, signOutFirebase } from "./firebase.js";
+
+const ADMIN_EMAIL = "kontakassistenku@gmail.com";
 
 function redirectToLogin(role) {
   const params = role ? `?role=${encodeURIComponent(role)}` : "";
@@ -15,35 +17,38 @@ function getIplAccess() {
 }
 
 export async function requireRole(expectedRole) {
-  // 1) Pastikan user sudah login (Supabase session ada)
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) {
+  // 1) Pastikan user sudah login via Firebase
+  const auth = getFirebaseAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
     redirectToLogin(expectedRole);
     return;
   }
 
-  // 2) Pastikan role sesuai (server-side source of truth: tabel profiles)
-  const { data: profile, error: profileErr } = await supabase
-    .from("profiles")
-    .select("role, ipl_template")
-    .eq("id", userData.user.id)
-    .single();
-
-  if (profileErr || !profile || profile.role !== expectedRole) {
-    alert("Akses ditolak: role tidak sesuai");
-    await supabase.auth.signOut();
-    redirectToLogin(expectedRole);
+  // 2) Validasi khusus ADMIN
+  if (expectedRole === "ADMIN" && user.email !== ADMIN_EMAIL) {
+    alert("Akun admin wajib menggunakan email resmi.");
+    await signOutFirebase();
+    redirectToLogin("ADMIN");
     return;
   }
 
-  // 3) Pastikan local IPL access ada (verifikasi pilihan dokumen IPL)
+  // 3) Validasi akses dokumen dari localStorage
   const iplAccess = getIplAccess();
   const sameRole = iplAccess?.role === expectedRole;
-  const hasTemplate = typeof iplAccess?.template === "string" && iplAccess.template.length > 0;
 
-  if (!sameRole || !hasTemplate) {
-    alert("Verifikasi IPL digital diperlukan ulang.");
-    await supabase.auth.signOut();
+  const hasTemplate =
+    expectedRole === "ADMIN" ||
+    (typeof iplAccess?.template === "string" && iplAccess.template.length > 0);
+
+  const hasDocNumber =
+    expectedRole === "ADMIN" ||
+    (typeof iplAccess?.documentId === "string" && iplAccess.documentId.length > 0);
+
+  if (!sameRole || !hasTemplate || !hasDocNumber) {
+    alert("Verifikasi IPL / SPL digital diperlukan ulang.");
+    await signOutFirebase();
     redirectToLogin(expectedRole);
   }
 }
