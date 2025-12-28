@@ -22,7 +22,6 @@ export function initPortalAuth({ role, docType, redirect }) {
   const sendBtn = document.querySelector("[data-action='send-otp']");
   const verifyBtn = document.querySelector("[data-action='verify']");
   const downloadBtn = document.querySelector("[data-action='download-template']");
-
   const requiredType = docType || requiredDocType[role];
 
   bindTemplateOptions(docSelect, requiredType);
@@ -39,14 +38,12 @@ export function initPortalAuth({ role, docType, redirect }) {
       alert("Email wajib diisi.");
       return;
     }
-
     if (role === "ADMIN" && email !== ADMIN_EMAIL) {
       alert(`Email admin wajib ${ADMIN_EMAIL}`);
       return;
     }
-
     if (role !== "ADMIN" && !documentId) {
-      alert("Nomor IPL / SPL wajib diisi.");
+      alert("Nomor IPL/SPL wajib diisi.");
       return;
     }
 
@@ -64,7 +61,7 @@ export function initPortalAuth({ role, docType, redirect }) {
       documentId
     });
 
-    alert("OTP dikirim. Cek email dan klik tautan verifikasi.");
+    alert("OTP dikirim via Firebase. Cek inbox/spam dan klik tautan verifikasi.");
   });
 
   async function completeSignIn() {
@@ -76,14 +73,12 @@ export function initPortalAuth({ role, docType, redirect }) {
       alert("Email wajib diisi.");
       return;
     }
-
     if (role === "ADMIN" && email !== ADMIN_EMAIL) {
       alert(`Email admin wajib ${ADMIN_EMAIL}`);
       return;
     }
-
     if (role !== "ADMIN" && !documentId) {
-      alert("Nomor IPL / SPL wajib diisi.");
+      alert("Nomor IPL/SPL wajib diisi.");
       return;
     }
 
@@ -115,4 +110,3 @@ export function initPortalAuth({ role, docType, redirect }) {
     await completeSignIn();
   })();
 }
-
