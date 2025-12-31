@@ -1,14 +1,12 @@
-import registry from "../../documents/seed/registry.json" assert { type: "json" };
-
-function normalizeDocNumber(value = "") {
-  return String(value).trim().toUpperCase();
-}
+import { sbSelect } from "../_lib/supabase-rest.js";
+import { appendAuditLog } from "../_lib/audit.js";
+import { normalizeDocNumber, normalizeEmail } from "../_lib/http.js";
 
 async function getPayload(req) {
   // Support: Node/Vercel pages-style (req.body) and Web Request (req.json()).
   if (req && typeof req.body === "object" && req.body !== null) return req.body;
   if (req && typeof req.json === "function") return await req.json();
-  return null;
+  return {};
 }
 
 function send(res, status, data) {
@@ -25,36 +23,36 @@ function send(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
-function findRegistryEntry({ role, docNumber }) {
-  const normalized = normalizeDocNumber(docNumber);
+function normalizeRole(role = "") {
+  return String(role).trim().toUpperCase();
+}
 
-  if (role === "CLIENT") {
-    return (registry.clients || []).find(
-      (entry) => normalizeDocNumber(entry.docNumber) === normalized
-    );
-  }
+async function findRegistryEntry({ role, docNumber, email }) {
+  const normalizedRole = normalizeRole(role);
+  const normalizedDoc = normalizeDocNumber(docNumber);
+  const normalizedEmail = normalizeEmail(email);
 
-  if (role === "MITRA") {
-    return (registry.mitra || []).find(
-      (entry) => normalizeDocNumber(entry.docNumber) === normalized
-    );
-  }
+  const rows = await sbSelect("registry", {
+    role: `eq.${normalizedRole}`,
+    doc_number: `eq.${normalizedDoc}`,
+  });
 
-  return null;
+  const entry = Array.isArray(rows) && rows.length ? rows[0] : null;
+  if (!entry) return null;
+  if (normalizedEmail && normalizeEmail(entry.email) !== normalizedEmail) return null;
+  return entry;
 }
 
 export default async function handler(req, res) {
-  const method =
-    (req && req.method) || (req instanceof Request ? req.method : "");
-
+  const method = (req && req.method) || (req instanceof Request ? req.method : "");
   if (method !== "POST") {
     return send(res, 405, { message: "Method Not Allowed" });
   }
 
   const body = (await getPayload(req)) || {};
-  const role = body.role ? String(body.role).trim().toUpperCase() : "";
-  const email = body.email ? String(body.email).trim() : "";
-  const docNumber = body.docNumber ? String(body.docNumber).trim() : "";
+  const role = normalizeRole(body.role);
+  const email = normalizeEmail(body.email);
+  const docNumber = body.docNumber ? normalizeDocNumber(body.docNumber) : null;
 
   if (!email || !role) {
     return send(res, 400, {
@@ -64,7 +62,15 @@ export default async function handler(req, res) {
   }
 
   if (role === "ADMIN") {
-    const allowed = email.toLowerCase() === "kontakassistenku@gmail.com";
+    const allowed = email === "kontakassistenku@gmail.com";
+    await appendAuditLog({
+      actorRole: role,
+      actorEmail: email,
+      action: "auth.request-link",
+      docNumber,
+      scope: "ADMIN",
+      metadata: { allowed },
+    });
     return send(res, allowed ? 200 : 401, {
       allowed,
       docType: "ADMIN",
@@ -79,28 +85,38 @@ export default async function handler(req, res) {
     });
   }
 
-  const registryEntry = findRegistryEntry({ role, docNumber });
-  if (!registryEntry) {
-    return send(res, 404, {
-      message: "Nomor dokumen tidak ditemukan",
-      allowed: false,
+  try {
+    const registryEntry = await findRegistryEntry({ role, docNumber, email });
+    if (!registryEntry) {
+      await appendAuditLog({
+        actorRole: role,
+        actorEmail: email,
+        action: "auth.request-link.fail",
+        docNumber,
+      });
+      return send(res, 404, {
+        message: "Nomor dokumen atau email tidak cocok dengan registry",
+        allowed: false,
+      });
+    }
+
+    await appendAuditLog({
+      actorRole: role,
+      actorEmail: email,
+      action: "auth.request-link.success",
+      docNumber,
+      docType: registryEntry.doc_type,
+      scope: registryEntry.scope,
     });
-  }
 
-  const emailMatches =
-    String(registryEntry.email || "").trim().toLowerCase() === email.toLowerCase();
-
-  if (!emailMatches) {
-    return send(res, 401, {
-      message: "Email tidak cocok dengan registry",
-      allowed: false,
+    return send(res, 200, {
+      allowed: true,
+      docType: registryEntry.doc_type,
+      name: registryEntry.name,
+      scope: registryEntry.scope,
     });
+  } catch (err) {
+    console.error("request-link error", err);
+    return send(res, 500, { message: "Internal error", allowed: false });
   }
-
-  return send(res, 200, {
-    allowed: true,
-    docType: registryEntry.docType,
-    name: registryEntry.name,
-    scope: registryEntry.scope,
-  });
 }
