@@ -4,7 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Akses Mitra | LegalWorkspace</title>
+
   <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0a58ff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+
   <style>
     body { background: #f8fafc; }
     .auth-card { max-width: 520px; margin: 60px auto; padding: 24px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
@@ -18,7 +27,13 @@
     .primary { background: #0ea5e9; color: #fff; }
     .muted { color: #6b7280; font-size: 14px; }
   </style>
+
+  <script type="module">
+    import { setupPwaInstall } from "/assets/pwa.js";
+    setupPwaInstall({ buttonId: "btnInstall", autoPromptOnFirstClick: true });
+  </script>
 </head>
+
 <body>
   <div class="auth-card">
     <p class="eyebrow">Portal Mitra</p>
