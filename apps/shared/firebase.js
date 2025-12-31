@@ -1,10 +1,16 @@
 // apps/shared/firebase.js
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
   signOut,
-  getIdToken
+  getIdToken,
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
 function getFirebaseConfig() {
@@ -31,8 +37,7 @@ export function waitForAuthReady(timeoutMs = 15000) {
   const auth = getFirebaseAuth();
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      unsub?.();
-      reject(new Error("Timeout menunggu Firebase Auth state"));
+      reject(new Error("Auth timeout"));
     }, timeoutMs);
 
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -57,4 +62,48 @@ export async function signOutFirebase() {
   } catch {
     // ignore
   }
+}
+
+async function validateRegistry(payload) {
+  const res = await fetch("/api/auth/request-link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.allowed) {
+    const msg = json?.message || "Registry tidak valid";
+    throw new Error(msg);
+  }
+  return json;
+}
+
+export async function sendEmailOtp(email, { role, docType, docNumber, template }) {
+  const auth = getFirebaseAuth();
+  const baseUrl = window.LEGALWORKSPACE_BASE_URL || window.location.origin;
+
+  await validateRegistry({ email, role, docNumber, docType, template });
+
+  const actionCodeSettings = {
+    url: `${baseUrl}/apps/login/?role=${encodeURIComponent(role)}&doc=${encodeURIComponent(
+      docNumber || ""
+    )}`,
+    handleCodeInApp: true,
+  };
+
+  await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+  localStorage.setItem("lw_last_email", email);
+}
+
+export async function hasEmailOtpLink() {
+  const auth = getFirebaseAuth();
+  return isSignInWithEmailLink(auth, window.location.href);
+}
+
+export async function completeEmailOtpSignIn(email) {
+  const auth = getFirebaseAuth();
+  if (!(await hasEmailOtpLink())) return null;
+  await signInWithEmailLink(auth, email, window.location.href);
+  localStorage.removeItem("lw_pending_login");
+  return await getFirebaseIdToken(true);
 }
