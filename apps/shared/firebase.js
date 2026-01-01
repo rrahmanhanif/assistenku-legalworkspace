@@ -1,35 +1,60 @@
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+// apps/shared/firebase.js
+// Firebase client helper (ESM, tanpa bundler)
+// Catatan: Pastikan /assets/firebase-config.js mem-define window.FIREBASE_CONFIG
+
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
   getAuth,
-  isSignInWithEmailLink,
+  onAuthStateChanged,
+  signOut,
   sendSignInLinkToEmail,
+  isSignInWithEmailLink,
   signInWithEmailLink,
-  signOut
+  getIdToken
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
-function getFirebaseConfig() {
-  if (typeof window === "undefined" || !window.FIREBASE_CONFIG) {
-    throw new Error("FIREBASE_CONFIG belum tersedia. Pastikan /assets/firebase-config.js ter-load.");
-  }
-  return window.FIREBASE_CONFIG;
-}
+let _app = null;
+let _auth = null;
 
 export function getFirebaseApp() {
-  if (!getApps().length) {
-    return initializeApp(getFirebaseConfig());
+  if (_app) return _app;
+
+  const cfg = window.FIREBASE_CONFIG;
+  if (!cfg || !cfg.apiKey || !cfg.authDomain || !cfg.projectId) {
+    throw new Error(
+      "Firebase config tidak ditemukan. Pastikan /assets/firebase-config.js tersedia dan mengisi window.FIREBASE_CONFIG."
+    );
   }
-  return getApp();
+
+  // Hindari double-init jika hot reload / multi-entry
+  _app = getApps().length ? getApps()[0] : initializeApp(cfg);
+  return _app;
 }
 
 export function getFirebaseAuth() {
-  return getAuth(getFirebaseApp());
+  if (_auth) return _auth;
+  const app = getFirebaseApp();
+  _auth = getAuth(app);
+  return _auth;
+}
+
+function waitForUser() {
+  const auth = getFirebaseAuth();
+  if (auth.currentUser) return Promise.resolve(auth.currentUser);
+
+  return new Promise((resolve) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      unsub();
+      resolve(user || null);
+    });
+  });
 }
 
 export async function getFirebaseIdToken(forceRefresh = false) {
   const auth = getFirebaseAuth();
-  const user = auth.currentUser;
+  const user = auth.currentUser || (await waitForUser());
   if (!user) return null;
-  return await user.getIdToken(forceRefresh);
+  return await getIdToken(user, forceRefresh);
 }
 
 export async function signOutFirebase() {
@@ -45,10 +70,17 @@ async function validateRegistry(payload) {
   const res = await fetch("/api/auth/request-link", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   });
-  const json = await res.json();
-  if (!res.ok || !json.allowed) {
+
+  let json = null;
+  try {
+    json = await res.json();
+  } catch {
+    // ignore parse error
+  }
+
+  if (!res.ok || !json?.allowed) {
     const msg = json?.message || "Registry tidak valid";
     throw new Error(msg);
   }
@@ -68,7 +100,7 @@ export async function sendEmailOtp(
     url: `${baseUrl}/apps/login/?role=${encodeURIComponent(role)}&doc=${encodeURIComponent(
       docNumber || ""
     )}`,
-    handleCodeInApp: true,
+    handleCodeInApp: true
   };
 
   await sendSignInLinkToEmail(auth, email, actionCodeSettings);
