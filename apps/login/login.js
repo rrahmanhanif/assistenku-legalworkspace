@@ -80,15 +80,14 @@ roleButtons.forEach((btn) => {
 });
 
 async function validateIplTemplate(templatePath) {
-  // Optional: validasi minimal template (misal fetch untuk memastikan path ada)
-  // Jika Anda sudah punya implementasi sebelumnya, silakan pertahankan.
-  try {
-    const res = await fetch(templatePath, { method: "GET" });
-    if (!res.ok) throw new Error("Template tidak ditemukan");
-    return { ok: true, templatePath };
-  } catch (e) {
-    throw new Error("Template IPL/SPL tidak valid");
-  }
+  if (!templatePath) return null;
+  const res = await fetch(templatePath, { cache: "no-store" });
+  if (!res.ok) throw new Error("Template dokumen tidak ditemukan di server");
+  const html = await res.text();
+  return {
+    path: templatePath,
+    bytes: html.length
+  };
 }
 
 function savePendingSession(payload) {
