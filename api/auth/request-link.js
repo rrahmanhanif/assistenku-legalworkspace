@@ -1,31 +1,7 @@
+import { getPayload, send } from "../_lib/http.js";
 import { sbSelect } from "../_lib/supabase-rest.js";
 import { appendAuditLog } from "../_lib/audit.js";
-import { normalizeDocNumber, normalizeEmail } from "../_lib/http.js";
-
-async function getPayload(req) {
-  // Support: Node/Vercel pages-style (req.body) and Web Request (req.json()).
-  if (req && typeof req.body === "object" && req.body !== null) return req.body;
-  if (req && typeof req.json === "function") return await req.json();
-  return {};
-}
-
-function send(res, status, data) {
-  // Support for edge-like usage (Response exists) and node-like usage (res exists).
-  if (typeof Response !== "undefined" && (!res || typeof res.end !== "function")) {
-    return new Response(JSON.stringify(data), {
-      status,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json");
-  res.end(JSON.stringify(data));
-}
-
-function normalizeRole(role = "") {
-  return String(role).trim().toUpperCase();
-}
+import { normalizeDocNumber, normalizeEmail, normalizeRole } from "../_lib/http.js";
 
 async function findRegistryEntry({ role, docNumber, email }) {
   const normalizedRole = normalizeRole(role);
@@ -44,7 +20,8 @@ async function findRegistryEntry({ role, docNumber, email }) {
 }
 
 export default async function handler(req, res) {
-  const method = (req && req.method) || (req instanceof Request ? req.method : "");
+  const method =
+    (req && req.method) || (req instanceof Request ? req.method : "");
   if (method !== "POST") {
     return send(res, 405, { message: "Method Not Allowed" });
   }
@@ -53,6 +30,7 @@ export default async function handler(req, res) {
   const role = normalizeRole(body.role);
   const email = normalizeEmail(body.email);
   const docNumber = body.docNumber ? normalizeDocNumber(body.docNumber) : null;
+  const adminCode = body.adminCode ? String(body.adminCode).trim() : "";
 
   if (!email || !role) {
     return send(res, 400, {
@@ -62,23 +40,40 @@ export default async function handler(req, res) {
   }
 
   if (role === "ADMIN") {
-    const allowed = email === "kontakassistenku@gmail.com";
+    const adminEmail = "kontakassistenku@gmail.com";
+    const expectedCode = process.env.ADMIN_ACCESS_CODE || "309309";
+    const emailOk = email === adminEmail;
+    const codeOk = adminCode && adminCode === expectedCode;
+    const allowed = emailOk && codeOk;
+
     await appendAuditLog({
       actorRole: role,
       actorEmail: email,
-      action: "auth.request-link",
+      action: allowed ? "auth.request-link.success" : "auth.request-link.fail",
       docNumber,
       scope: "ADMIN",
-      metadata: { allowed },
+      metadata: {
+        role,
+        reason: allowed ? "ok" : emailOk ? "bad_code" : "bad_email",
+      },
     });
+
     return send(res, allowed ? 200 : 401, {
       allowed,
       docType: "ADMIN",
-      message: allowed ? "Admin tervalidasi" : "Email admin tidak sesuai",
+      message: allowed ? "Admin tervalidasi" : "Kode admin tidak valid",
     });
   }
 
   if (!docNumber) {
+    await appendAuditLog({
+      actorRole: role,
+      actorEmail: email,
+      action: "auth.request-link.fail",
+      docNumber,
+      metadata: { reason: "missing_docNumber" },
+    });
+
     return send(res, 400, {
       message: "Nomor dokumen wajib diisi",
       allowed: false,
@@ -93,9 +88,26 @@ export default async function handler(req, res) {
         actorEmail: email,
         action: "auth.request-link.fail",
         docNumber,
+        metadata: { reason: "mismatch" },
       });
+
       return send(res, 404, {
         message: "Nomor dokumen atau email tidak cocok dengan registry",
+        allowed: false,
+      });
+    }
+
+    if (!registryEntry.is_verified) {
+      await appendAuditLog({
+        actorRole: role,
+        actorEmail: email,
+        action: "auth.request-link.fail",
+        docNumber,
+        metadata: { reason: "unverified" },
+      });
+
+      return send(res, 403, {
+        message: "Dokumen belum diverifikasi admin",
         allowed: false,
       });
     }
