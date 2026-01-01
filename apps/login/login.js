@@ -10,6 +10,8 @@ const btnSend = document.getElementById("btnSend");
 const roleButtons = Array.from(document.querySelectorAll(".role-btn"));
 const iplSelect = document.getElementById("iplSelect");
 const docFields = document.getElementById("docFields");
+const adminCodeInput = document.getElementById("adminCode");
+const adminCodeField = document.getElementById("adminCodeField");
 
 const ADMIN_EMAIL = "kontakassistenku@gmail.com";
 
@@ -46,6 +48,10 @@ function toggleDocFields(role) {
     docFields.style.display = isAdmin ? "none" : "block";
   }
 
+  if (adminCodeField) {
+    adminCodeField.style.display = isAdmin ? "block" : "none";
+  }
+
   if (isAdmin) {
     // Bersihkan doc/template jika admin
     if (iplSelect) iplSelect.selectedIndex = -1;
@@ -73,33 +79,16 @@ roleButtons.forEach((btn) => {
   btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
 });
 
-const params = new URLSearchParams(window.location.search);
-const defaultRole = params.get("role");
-const docFromLink = params.get("doc") || "";
-const templateFromLink = params.get("tpl") || "";
-
-if (defaultRole && templateOptions[defaultRole]) {
-  setActiveRole(defaultRole);
-} else {
-  renderTemplateOptions(selectedRole);
-  toggleDocFields(selectedRole);
-}
-
-if (templateFromLink && iplSelect) {
-  iplSelect.value = decodeURIComponent(templateFromLink);
-}
-if (docFromLink && docNumberInput) {
-  docNumberInput.value = decodeURIComponent(docFromLink);
-}
-
-async function validateIplTemplate(path) {
-  const response = await fetch(path, { cache: "no-store" });
-  if (!response.ok) throw new Error("Dokumen IPL/SPL tidak dapat diakses");
-
-  const text = await response.text();
-  if (!text || text.trim().length < 20) throw new Error("Konten dokumen tidak valid");
-
-  return text.substring(0, 120);
+async function validateIplTemplate(templatePath) {
+  // Optional: validasi minimal template (misal fetch untuk memastikan path ada)
+  // Jika Anda sudah punya implementasi sebelumnya, silakan pertahankan.
+  try {
+    const res = await fetch(templatePath, { method: "GET" });
+    if (!res.ok) throw new Error("Template tidak ditemukan");
+    return { ok: true, templatePath };
+  } catch (e) {
+    throw new Error("Template IPL/SPL tidak valid");
+  }
 }
 
 function savePendingSession(payload) {
@@ -131,6 +120,7 @@ btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim();
   const templatePath = iplSelect?.value || "";
   const docNumber = docNumberInput?.value.trim() || "";
+  const adminCode = adminCodeInput?.value.trim() || "";
 
   if (!email) return alert("Email wajib diisi");
 
@@ -139,6 +129,7 @@ btnSend?.addEventListener("click", async () => {
 
   if (selectedRole === "ADMIN") {
     if (email !== ADMIN_EMAIL) return alert(`Email admin wajib ${ADMIN_EMAIL}`);
+    if (!adminCode) return alert("Kode admin wajib diisi");
   } else {
     if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
     if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
@@ -158,14 +149,16 @@ btnSend?.addEventListener("click", async () => {
       role: selectedRole,
       docType,
       docNumber: selectedRole === "ADMIN" ? null : docNumber,
-      template: selectedRole === "ADMIN" ? null : templatePath
+      template: selectedRole === "ADMIN" ? null : templatePath,
+      adminCode: selectedRole === "ADMIN" ? adminCode : undefined
     });
 
     savePendingSession({
       role: selectedRole,
       template: selectedRole === "ADMIN" ? null : templatePath,
       docNumber: selectedRole === "ADMIN" ? null : docNumber,
-      preview
+      preview,
+      adminCode: selectedRole === "ADMIN" ? adminCode : undefined
     });
 
     alert("Tautan login dikirim via email. Buka email untuk menyelesaikan login.");
@@ -202,6 +195,16 @@ btnSend?.addEventListener("click", async () => {
       docNumber: stored?.docNumber || docNumberInput?.value || null,
       preview: stored?.preview
     });
+
+    const finalDocNumber =
+      role === "ADMIN" ? null : stored?.docNumber || docNumberInput?.value || null;
+    if (role !== "ADMIN" && finalDocNumber) {
+      localStorage.setItem("lw_doc_number", finalDocNumber);
+    }
+    localStorage.setItem("lw_role", role);
+    if (role === "ADMIN" && stored?.adminCode) {
+      sessionStorage.setItem("lw_admin_code", stored.adminCode);
+    }
 
     if (role === "CLIENT") window.location.href = "/apps/client/";
     else if (role === "MITRA") window.location.href = "/apps/mitra/";
