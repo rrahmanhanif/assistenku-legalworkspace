@@ -46,8 +46,7 @@ export async function requireUser(req, { expectedRole, docNumber, scope }) {
     const adminCodeHeader =
       req.headers?.["x-admin-code"] || req.headers?.["X-Admin-Code"] || "";
     const expectedCode = process.env.ADMIN_ACCESS_CODE || "309309";
-    const emailOk =
-      normalizeEmail(decoded.email) === normalizeEmail(adminEmail);
+    const emailOk = normalizeEmail(decoded.email) === normalizeEmail(adminEmail);
     const codeOk =
       adminCodeHeader && String(adminCodeHeader).trim() === expectedCode;
 
