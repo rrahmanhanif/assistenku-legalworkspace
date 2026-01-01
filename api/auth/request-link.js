@@ -20,8 +20,7 @@ async function findRegistryEntry({ role, docNumber, email }) {
 }
 
 export default async function handler(req, res) {
-  const method =
-    (req && req.method) || (req instanceof Request ? req.method : "");
+  const method = (req && req.method) || (req instanceof Request ? req.method : "");
   if (method !== "POST") {
     return send(res, 405, { message: "Method Not Allowed" });
   }
@@ -52,10 +51,7 @@ export default async function handler(req, res) {
       action: allowed ? "auth.request-link.success" : "auth.request-link.fail",
       docNumber,
       scope: "ADMIN",
-      metadata: {
-        role,
-        reason: allowed ? "ok" : emailOk ? "bad_code" : "bad_email",
-      },
+      metadata: { role, reason: allowed ? "ok" : emailOk ? "bad_code" : "bad_email" },
     });
 
     return send(res, allowed ? 200 : 401, {
