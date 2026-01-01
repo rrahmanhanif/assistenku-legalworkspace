@@ -1,58 +1,35 @@
-// apps/shared/firebase.js
-import {
-  initializeApp,
-  getApps
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
   getAuth,
-  onAuthStateChanged,
-  signOut,
-  getIdToken,
   isSignInWithEmailLink,
   sendSignInLinkToEmail,
-  signInWithEmailLink
+  signInWithEmailLink,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
 function getFirebaseConfig() {
-  const cfg = window.FIREBASE_CONFIG;
-  if (!cfg || !cfg.apiKey) {
-    throw new Error("FIREBASE_CONFIG belum dimuat. Pastikan /assets/firebase-config.js di-include sebelum module.");
+  if (typeof window === "undefined" || !window.FIREBASE_CONFIG) {
+    throw new Error("FIREBASE_CONFIG belum tersedia. Pastikan /assets/firebase-config.js ter-load.");
   }
-  return cfg;
+  return window.FIREBASE_CONFIG;
 }
 
 export function getFirebaseApp() {
   if (!getApps().length) {
-    initializeApp(getFirebaseConfig());
+    return initializeApp(getFirebaseConfig());
   }
-  return getApps()[0];
+  return getApp();
 }
 
 export function getFirebaseAuth() {
-  getFirebaseApp();
-  return getAuth();
-}
-
-export function waitForAuthReady(timeoutMs = 15000) {
-  const auth = getFirebaseAuth();
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error("Auth timeout"));
-    }, timeoutMs);
-
-    const unsub = onAuthStateChanged(auth, (user) => {
-      clearTimeout(timer);
-      unsub();
-      resolve(user || null);
-    });
-  });
+  return getAuth(getFirebaseApp());
 }
 
 export async function getFirebaseIdToken(forceRefresh = false) {
   const auth = getFirebaseAuth();
-  const user = auth.currentUser || (await waitForAuthReady());
+  const user = auth.currentUser;
   if (!user) return null;
-  return await getIdToken(user, forceRefresh);
+  return await user.getIdToken(forceRefresh);
 }
 
 export async function signOutFirebase() {
@@ -78,11 +55,14 @@ async function validateRegistry(payload) {
   return json;
 }
 
-export async function sendEmailOtp(email, { role, docType, docNumber, template }) {
+export async function sendEmailOtp(
+  email,
+  { role, docType, docNumber, template, adminCode }
+) {
   const auth = getFirebaseAuth();
   const baseUrl = window.LEGALWORKSPACE_BASE_URL || window.location.origin;
 
-  await validateRegistry({ email, role, docNumber, docType, template });
+  await validateRegistry({ email, role, docNumber, docType, template, adminCode });
 
   const actionCodeSettings = {
     url: `${baseUrl}/apps/login/?role=${encodeURIComponent(role)}&doc=${encodeURIComponent(
