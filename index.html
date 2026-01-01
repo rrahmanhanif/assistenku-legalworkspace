@@ -3,182 +3,232 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LegalWorkspace</title>
-
-  <!-- Icons / Styles -->
-  <link rel="icon" type="image/png" href="/assets/img/logo.png" />
-  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <title>LegalWorkspace | Assistenku</title>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="#0a58ff" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <meta name="theme-color" content="#1e3a8a" />
+  <link rel="icon" href="/assets/img/logo.png" />
 
   <style>
     :root {
-      --primary: #0a58ff;
-      --primary-dark: #0847cc;
-      --bg: #f4f7fb;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
+      --bg: #0b1220;
+      --card: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --primary: #93c5fd;
+      --primary-strong: #60a5fa;
+      --shadow: 0 12px 40px rgba(0,0,0,0.35);
+      --radius: 16px;
     }
 
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      background: radial-gradient(circle at 20% 20%, rgba(10,88,255,0.08), transparent 28%),
-                  radial-gradient(circle at 80% 10%, rgba(56,189,248,0.1), transparent 26%),
-                  var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(96,165,250,0.22), transparent 60%),
+        radial-gradient(1000px 600px at 80% 10%, rgba(147,197,253,0.16), transparent 60%),
+        radial-gradient(800px 500px at 50% 90%, rgba(14,165,233,0.10), transparent 60%),
+        var(--bg);
       color: var(--text);
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.95em;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
     }
 
     header {
-      max-width: 1100px;
+      max-width: 1080px;
       margin: 0 auto;
-      padding: 32px 20px 12px 20px;
+      padding: 22px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
     }
 
     .brand {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       font-weight: 700;
-      font-size: 18px;
-      color: var(--text);
-      text-decoration: none;
+      letter-spacing: 0.2px;
     }
-
     .brand img {
-      width: 42px;
-      height: 42px;
+      width: 34px;
+      height: 34px;
       border-radius: 10px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 4px;
     }
 
     .domain-tag {
-      background: #e0f2fe;
-      color: #075985;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      white-space: nowrap;
     }
 
     main {
-      max-width: 1100px;
+      max-width: 1080px;
       margin: 0 auto;
-      padding: 16px 20px 60px 20px;
-      display: grid;
-      gap: 28px;
+      padding: 0 18px 48px;
     }
 
     .hero {
-      background: linear-gradient(135deg, rgba(10,88,255,0.95), rgba(14,165,233,0.95));
-      color: white;
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: 0 16px 45px rgba(10,88,255,0.18);
+      margin-top: 10px;
+      padding: 34px 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      box-shadow: var(--shadow);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: 1.3fr 0.7fr;
       gap: 18px;
-      position: relative;
-      overflow: hidden;
+      align-items: center;
     }
 
-    .hero::after {
-      content: "";
-      position: absolute;
-      right: -40px;
-      bottom: -40px;
-      width: 220px;
-      height: 220px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 50%;
-      filter: blur(2px);
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+      .domain-tag { display: none; }
     }
 
-    .hero h1 {
-      margin: 0 0 10px 0;
-      font-size: 32px;
-      line-height: 1.2;
-    }
-
-    .hero p { margin: 0 0 18px 0; color: rgba(255,255,255,0.85); }
-
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
-
-    .btn-primary, .btn-secondary {
+    .pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 14px 16px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.88);
+      width: fit-content;
+      font-size: 0.88rem;
+    }
+
+    h1 {
+      margin: 12px 0 10px;
+      font-size: 2rem;
+      line-height: 1.2;
+      letter-spacing: -0.4px;
+    }
+
+    .lead {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 58ch;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       border-radius: 12px;
-      text-decoration: none;
-      font-weight: 700;
-      transition: transform 120ms ease, box-shadow 120ms ease;
-      border: none;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      white-space: nowrap;
     }
 
     .btn-primary {
-      background: #fff;
-      color: #0a58ff;
-      box-shadow: 0 10px 30px rgba(255,255,255,0.25);
+      background: rgba(96,165,250,0.18);
+      border-color: rgba(96,165,250,0.35);
+      color: rgba(255,255,255,0.92);
+      font-weight: 600;
     }
+    .btn-primary:hover { transform: translateY(-1px); }
 
     .btn-secondary {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.88);
+    }
+    .btn-secondary:hover { transform: translateY(-1px); }
+
+    .hero-right {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      padding: 16px;
+    }
+    .hero-right h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+    .hero-right p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+    .hero-right .install {
+      width: 100%;
     }
 
-    .btn-primary:hover, .btn-secondary:hover { transform: translateY(-1px); }
+    section {
+      margin-top: 22px;
+      padding: 18px 2px 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.25rem;
+      letter-spacing: -0.2px;
+    }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
     }
 
     .card {
-      background: var(--card);
-      border-radius: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.05);
       padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-      border: 1px solid #e5e7eb;
-      display: grid;
-      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
     }
-
-    .card h3 { margin: 0; font-size: 18px; }
-    .card p { margin: 0; color: var(--muted); }
-
-    .pill {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #e5e7eb;
-      color: #111827;
-      font-size: 12px;
-      font-weight: 700;
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+    .card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.55;
     }
 
     footer {
-      max-width: 1100px;
+      max-width: 1080px;
       margin: 0 auto;
-      padding: 0 20px 40px 20px;
-      color: var(--muted);
-      font-size: 14px;
+      padding: 22px 18px 40px;
+      color: rgba(255,255,255,0.60);
+      font-size: 0.92rem;
     }
   </style>
 
@@ -203,18 +253,31 @@
       <div>
         <p class="pill">Workspace</p>
         <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
+        <p class="lead">
+          Login menggunakan tautan email berbasis registry dokumen (IPL/SPL) dengan audit log.
+          Admin dapat memonitor client dan mitra secara terpusat.
+        </p>
 
         <!-- UPDATED LINKS -->
         <div class="actions">
           <a class="btn-primary" href="apps/login/index.html?role=ADMIN">Masuk sebagai Admin</a>
-          <a class="btn-secondary" href="apps/login/index.html?role=CLIENT">Portal Client</a>
-          <a class="btn-secondary"
-             href="apps/login/index.html?role=MITRA"
-             style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">
-            Portal Mitra
-          </a>
+          <a class="btn-secondary" href="apps/login/index.html?role=CLIENT&accountType=PERSONAL">Client Non-PT</a>
+          <a class="btn-secondary" href="apps/login/index.html?role=CLIENT&accountType=PT" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">Client PT</a>
+          <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PERSONAL" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">Mitra Non-PT</a>
+          <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PT" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">Mitra PT</a>
         </div>
       </div>
+
+      <div class="hero-right">
+        <h3>Install aplikasi</h3>
+        <p>
+          Install sebagai PWA untuk akses cepat dari Home Screen tanpa membuka tab baru.
+        </p>
+        <button id="btnInstall" class="btn-primary install" type="button">
+          Install LegalWorkspace
+        </button>
+      </div>
+    </section>
 
     <section>
       <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -232,21 +295,35 @@
         <div class="card">
           <h3>Portal Klien</h3>
           <p>Akses dokumen dan status penandatanganan dari sisi klien.</p>
-          <a class="btn-secondary"
-             href="apps/login/index.html?role=CLIENT"
-             style="color: var(--primary); background: #eef2ff;">
-            Masuk Portal Klien
-          </a>
+          <div class="actions" style="gap: 8px; flex-direction: column; align-items: stretch;">
+            <a class="btn-secondary"
+               href="apps/login/index.html?role=CLIENT&accountType=PERSONAL"
+               style="color: var(--primary); background: #eef2ff; justify-content: center;">
+              Masuk Client Non-PT
+            </a>
+            <a class="btn-secondary"
+               href="apps/login/index.html?role=CLIENT&accountType=PT"
+               style="color: var(--primary); background: #e0f2fe; justify-content: center;">
+              Masuk Client PT
+            </a>
+          </div>
         </div>
 
         <div class="card">
           <h3>Portal Mitra</h3>
           <p>Absensi, worklog, dan alur kerja untuk mitra dan konsultan.</p>
-          <a class="btn-secondary"
-             href="apps/login/index.html?role=MITRA"
-             style="color: #0f172a; background: #fef3c7;">
-            Buka Portal Mitra
-          </a>
+          <div class="actions" style="gap: 8px; flex-direction: column; align-items: stretch;">
+            <a class="btn-secondary"
+               href="apps/login/index.html?role=MITRA&accountType=PERSONAL"
+               style="color: #0f172a; background: #fef3c7; justify-content: center;">
+              Mitra Non-PT
+            </a>
+            <a class="btn-secondary"
+               href="apps/login/index.html?role=MITRA&accountType=PT"
+               style="color: #0f172a; background: #fde68a; justify-content: center;">
+              Mitra PT
+            </a>
+          </div>
         </div>
       </div>
     </section>
