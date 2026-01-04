@@ -5,232 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LegalWorkspace | Assistenku</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="#1e3a8a" />
-  <link rel="icon" href="/assets/img/logo.png" />
+  <meta name="theme-color" content="#0b1020" />
 
-  <style>
-    :root {
-      --bg: #0b1220;
-      --card: rgba(255,255,255,0.06);
-      --border: rgba(255,255,255,0.12);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.70);
-      --primary: #93c5fd;
-      --primary-strong: #60a5fa;
-      --shadow: 0 12px 40px rgba(0,0,0,0.35);
-      --radius: 16px;
-    }
+  <link rel="stylesheet" href="/assets/styles.css" />
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background:
-        radial-gradient(1200px 600px at 20% 0%, rgba(96,165,250,0.22), transparent 60%),
-        radial-gradient(1000px 600px at 80% 10%, rgba(147,197,253,0.16), transparent 60%),
-        radial-gradient(800px 500px at 50% 90%, rgba(14,165,233,0.10), transparent 60%),
-        var(--bg);
-      color: var(--text);
-    }
-
-    a { color: inherit; text-decoration: none; }
-    code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.95em;
-      padding: 2px 6px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.10);
-    }
-
-    header {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 22px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-    }
-    .brand img {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.14);
-      padding: 4px;
-    }
-
-    .domain-tag {
-      color: var(--muted);
-      font-size: 0.92rem;
-      white-space: nowrap;
-    }
-
-    main {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 18px 48px;
-    }
-
-    .hero {
-      margin-top: 10px;
-      padding: 34px 22px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      box-shadow: var(--shadow);
-      display: grid;
-      grid-template-columns: 1.3fr 0.7fr;
-      gap: 18px;
-      align-items: center;
-    }
-
-    @media (max-width: 860px) {
-      .hero { grid-template-columns: 1fr; }
-      .domain-tag { display: none; }
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.88);
-      width: fit-content;
-      font-size: 0.88rem;
-    }
-
-    h1 {
-      margin: 12px 0 10px;
-      font-size: 2rem;
-      line-height: 1.2;
-      letter-spacing: -0.4px;
-    }
-
-    .lead {
-      margin: 0 0 18px;
-      color: var(--muted);
-      line-height: 1.6;
-      max-width: 58ch;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .btn-primary,
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border-radius: 12px;
-      padding: 10px 14px;
-      border: 1px solid rgba(255,255,255,0.14);
-      cursor: pointer;
-      user-select: none;
-      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: rgba(96,165,250,0.18);
-      border-color: rgba(96,165,250,0.35);
-      color: rgba(255,255,255,0.92);
-      font-weight: 600;
-    }
-    .btn-primary:hover { transform: translateY(-1px); }
-
-    .btn-secondary {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(255,255,255,0.14);
-      color: rgba(255,255,255,0.88);
-    }
-    .btn-secondary:hover { transform: translateY(-1px); }
-
-    .hero-right {
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      padding: 16px;
-    }
-    .hero-right h3 {
-      margin: 0 0 8px;
-      font-size: 1.05rem;
-    }
-    .hero-right p {
-      margin: 0 0 14px;
-      color: var(--muted);
-      line-height: 1.55;
-      font-size: 0.95rem;
-    }
-    .hero-right .install {
-      width: 100%;
-    }
-
-    section {
-      margin-top: 22px;
-      padding: 18px 2px 0;
-    }
-
-    h2 {
-      margin: 0 0 14px;
-      font-size: 1.25rem;
-      letter-spacing: -0.2px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-    @media (max-width: 980px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-
-    .card {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,0.05);
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-    }
-    .card h3 {
-      margin: 0 0 8px;
-      font-size: 1.05rem;
-    }
-    .card p {
-      margin: 0 0 14px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    footer {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 22px 18px 40px;
-      color: rgba(255,255,255,0.60);
-      font-size: 0.92rem;
-    }
-  </style>
+  <!-- Firebase config (wajib ada di server) -->
+  <script src="/assets/firebase-config.js"></script>
 
   <!-- PWA bootstrap (SW + install prompt hook) -->
   <script type="module">
@@ -253,10 +34,6 @@
       <div>
         <p class="pill">Workspace</p>
         <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
-        <p class="lead">
-          Login menggunakan tautan email berbasis registry dokumen (IPL/SPL) dengan audit log.
-          Admin dapat memonitor client dan mitra secara terpusat.
-        </p>
 
         <!-- UPDATED LINKS -->
         <div class="actions">
@@ -266,16 +43,6 @@
           <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PERSONAL" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">Mitra Non-PT</a>
           <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PT" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4);">Mitra PT</a>
         </div>
-      </div>
-
-      <div class="hero-right">
-        <h3>Install aplikasi</h3>
-        <p>
-          Install sebagai PWA untuk akses cepat dari Home Screen tanpa membuka tab baru.
-        </p>
-        <button id="btnInstall" class="btn-primary install" type="button">
-          Install LegalWorkspace
-        </button>
       </div>
     </section>
 
