@@ -79,17 +79,6 @@ roleButtons.forEach((btn) => {
   btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
 });
 
-async function validateIplTemplate(templatePath) {
-  if (!templatePath) return null;
-  const res = await fetch(templatePath, { cache: "no-store" });
-  if (!res.ok) throw new Error("Template dokumen tidak ditemukan di server");
-  const html = await res.text();
-  return {
-    path: templatePath,
-    bytes: html.length
-  };
-}
-
 function savePendingSession(payload) {
   localStorage.setItem("lw_pending_login", JSON.stringify(payload));
 }
