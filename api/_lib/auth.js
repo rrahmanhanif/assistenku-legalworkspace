@@ -1,3 +1,5 @@
+// api/_lib/auth.js
+
 import { verifyIdToken } from "./firebase-admin.js";
 import { getBearerToken, normalizeDocNumber, normalizeEmail } from "./http.js";
 import { sbSelect } from "./supabase-rest.js";
@@ -6,7 +8,6 @@ import { appendAuditLog } from "./audit.js";
 async function findRegistryEntry({ docNumber, expectedRole, email }) {
   const normalized = normalizeDocNumber(docNumber);
   const normalizedEmail = normalizeEmail(email);
-
   const params = normalized
     ? {
         doc_number: `eq.${normalized}`,
@@ -59,8 +60,8 @@ export async function requireUser(req, { expectedRole, docNumber, scope }) {
           reason: !emailOk
             ? "bad_email"
             : !adminCodeHeader
-            ? "missing_code"
-            : "bad_code",
+              ? "missing_code"
+              : "bad_code",
         },
       });
       const err = new Error("Akses admin tidak valid");
