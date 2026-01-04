@@ -1,3 +1,5 @@
+// api/overtime/decision.js
+
 import { json, readJson } from "../_lib/http.js";
 import { requireUser } from "../_lib/auth.js";
 import { sbUpdate } from "../_lib/supabase-rest.js";
@@ -11,6 +13,7 @@ export default async function handler(req, res) {
     const body = await readJson(req);
 
     const status = body.status === "APPROVED" ? "APPROVED" : "REJECTED";
+
     await sbUpdate(
       "overtime_requests",
       { id: `eq.${body.id}` },
