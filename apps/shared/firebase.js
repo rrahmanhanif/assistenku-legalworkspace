@@ -57,11 +57,14 @@ async function validateRegistry(payload) {
   return json;
 }
 
-export async function sendEmailOtp(email, { role, docType, docNumber, template, adminCode } = {}) {
+export async function sendEmailOtp(
+  email,
+  { role, docType, docNumber, template, adminCode } = {}
+) {
   const auth = getFirebaseAuth();
   const baseUrl = window.LEGALWORKSPACE_BASE_URL || window.location.origin;
 
-  // Validasi registry dulu (server side)
+  // Validasi registry dulu (server-side)
   await validateRegistry({ email, role, docNumber, docType, template, adminCode });
 
   const actionCodeSettings = {
