@@ -1,7 +1,14 @@
-import { getPayload, send } from "../_lib/http.js";
+// api/auth/request-link.js
+
+import { send } from "../_lib/send.js";
+import { getPayload } from "../_lib/http.js";
 import { sbSelect } from "../_lib/supabase-rest.js";
 import { appendAuditLog } from "../_lib/audit.js";
-import { normalizeDocNumber, normalizeEmail, normalizeRole } from "../_lib/http.js";
+import {
+  normalizeEmail,
+  normalizeDocNumber,
+  normalizeRole,
+} from "../_lib/http.js";
 
 async function findRegistryEntry({ role, docNumber, email }) {
   const normalizedRole = normalizeRole(role);
