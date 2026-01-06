@@ -1,36 +1,63 @@
 // apps/shared/firebase.js
+import {
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 
-import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
   getAuth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
+  onAuthStateChanged,
   signOut,
+  getIdToken,
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
-function assertFirebaseConfig() {
+import { apiFetch } from "/assets/apiClient.js";
+
+function getFirebaseConfig() {
   const cfg = window.FIREBASE_CONFIG;
-  if (!cfg || !cfg.apiKey || !cfg.projectId) {
-    throw new Error("Firebase config tidak ditemukan. Pastikan /assets/firebase-config.js ter-load.");
+  if (!cfg || !cfg.apiKey) {
+    throw new Error(
+      "FIREBASE_CONFIG belum dimuat. Pastikan /assets/firebase-config.js di-include sebelum module."
+    );
   }
   return cfg;
 }
 
 export function getFirebaseApp() {
-  if (getApps().length) return getApp();
-  return initializeApp(assertFirebaseConfig());
+  if (!getApps().length) {
+    initializeApp(getFirebaseConfig());
+  }
+  return getApps()[0];
 }
 
 export function getFirebaseAuth() {
-  return getAuth(getFirebaseApp());
+  getFirebaseApp();
+  return getAuth();
+}
+
+export function waitForAuthReady(timeoutMs = 15000) {
+  const auth = getFirebaseAuth();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Timeout menunggu Firebase Auth"));
+    }, timeoutMs);
+
+    const unsub = onAuthStateChanged(auth, (user) => {
+      clearTimeout(timer);
+      unsub();
+      resolve(user || null);
+    });
+  });
 }
 
 export async function getFirebaseIdToken(forceRefresh = false) {
   const auth = getFirebaseAuth();
-  const user = auth.currentUser;
+  const user = auth.currentUser || (await waitForAuthReady());
   if (!user) return null;
-  return await user.getIdToken(!!forceRefresh);
+  return await getIdToken(user, forceRefresh);
 }
 
 export async function signOutFirebase() {
@@ -43,33 +70,40 @@ export async function signOutFirebase() {
 }
 
 async function validateRegistry(payload) {
-  const res = await fetch("/api/auth/request-link", {
+  const json = await apiFetch("/api/auth/request-link", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: payload
   });
 
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || !json.allowed) {
+  if (!json?.allowed) {
     const msg = json?.message || "Registry tidak valid";
     throw new Error(msg);
   }
+
   return json;
 }
 
 export async function sendEmailOtp(
   email,
-  { role, docType, docNumber, template, adminCode } = {}
+  { role, docType, docNumber, template, adminCode }
 ) {
   const auth = getFirebaseAuth();
   const baseUrl = window.LEGALWORKSPACE_BASE_URL || window.location.origin;
 
-  // Validasi registry dulu (server-side)
-  await validateRegistry({ email, role, docNumber, docType, template, adminCode });
+  await validateRegistry({
+    email,
+    role,
+    docType,
+    docNumber,
+    template,
+    adminCode
+  });
 
   const actionCodeSettings = {
-    url: `${baseUrl}/apps/login/?role=${encodeURIComponent(role || "")}&doc=${encodeURIComponent(docNumber || "")}`,
-    handleCodeInApp: true,
+    url: `${baseUrl}/apps/login/?role=${encodeURIComponent(
+      role
+    )}&doc=${encodeURIComponent(docNumber || "")}`,
+    handleCodeInApp: true
   };
 
   await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -83,8 +117,11 @@ export async function hasEmailOtpLink() {
 
 export async function completeEmailOtpSignIn(email) {
   const auth = getFirebaseAuth();
+
   if (!(await hasEmailOtpLink())) return null;
+
   await signInWithEmailLink(auth, email, window.location.href);
   localStorage.removeItem("lw_pending_login");
+
   return await getFirebaseIdToken(true);
 }
