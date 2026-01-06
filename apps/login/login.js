@@ -226,4 +226,25 @@ btnSend?.addEventListener("click", async () => {
   } catch (err) {
     console.error("Auto sign-in gagal", err);
   }
+
+  // ... semua function setActiveRole, toggleDocFields, dll
+
+function initRoleFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const role = (params.get("role") || "").toUpperCase();
+  if (role === "ADMIN" || role === "CLIENT" || role === "MITRA") {
+    setActiveRole(role);
+  } else {
+    setActiveRole(selectedRole);
+  }
+}
+
+initRoleFromUrl(); // PASTI jalan saat page load
+
+btnSend?.addEventListener("click", async () => {
+  ...
+});
+
+(async function autoCompleteFromLink() {
+  ...
 })();
