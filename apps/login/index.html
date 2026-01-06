@@ -58,21 +58,18 @@
 
       <!-- DOC FIELDS -->
       <div id="docFields">
-        <label for="iplSelect">Dokumen IPL / SPL Digital</label>
-        <select id="iplSelect"></select>
-        <small class="helper">
-          Semua pilihan diambil langsung dari folder
-          <code>documents/templates</code>.
-        </small>
+  <label id="docNumberLabel" for="docNumber">Nomor Dokumen</label>
+  <input
+    id="docNumber"
+    type="text"
+    placeholder="Masukkan nomor dokumen"
+    autocomplete="off"
+  />
+  <small id="docHint" class="helper">
+    Nomor dokumen harus sudah diregister oleh Admin.
+  </small>
+</div>
 
-        <label for="docNumber">Nomor IPL/SPL</label>
-        <input
-          id="docNumber"
-          type="text"
-          placeholder="Misal: IPL-2024-001 atau SPL-2024-002"
-          autocomplete="off"
-        />
-      </div>
 
       <div id="adminCodeField" style="display:none">
         <label for="adminCode">Kode Admin</label>
