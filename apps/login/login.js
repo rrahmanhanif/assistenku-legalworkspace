@@ -7,77 +7,89 @@ import {
 const emailInput = document.getElementById("email");
 const docNumberInput = document.getElementById("docNumber");
 const btnSend = document.getElementById("btnSend");
-const roleButtons = Array.from(document.querySelectorAll(".role-btn"));
-const iplSelect = document.getElementById("iplSelect");
+
 const docFields = document.getElementById("docFields");
+const docNumberLabel = document.getElementById("docNumberLabel");
+const docHint = document.getElementById("docHint");
+
 const adminCodeInput = document.getElementById("adminCode");
 const adminCodeField = document.getElementById("adminCodeField");
 
+const roleRadios = Array.from(document.querySelectorAll("input[name='role']"));
+
 const ADMIN_EMAIL = "kontakassistenku@gmail.com";
 
-const templateOptions = {
-  CLIENT: [
-    { value: "/documents/templates/01-ipl.html", label: "IPL Utama (01-ipl.html)" },
-    { value: "/documents/templates/02-addendum-ipl-pt.html", label: "Addendum IPL PT" },
-    { value: "/documents/templates/03-spl.html", label: "SPL Turunan" }
-  ],
-  MITRA: [
-    { value: "/documents/templates/04-perjanjian-mitra.html", label: "Perjanjian Mitra" },
-    { value: "/documents/templates/06-lembar-kinerja.html", label: "Lembar Kinerja Mitra" }
-  ],
-  ADMIN: []
-};
-
 let selectedRole = "CLIENT";
+let selectedAccountType = "PERSONAL"; // PERSONAL | PT
 
-function renderTemplateOptions(role) {
-  if (!iplSelect) return;
-
-  iplSelect.innerHTML = "";
-  (templateOptions[role] || []).forEach((item) => {
-    const option = document.createElement("option");
-    option.value = item.value;
-    option.textContent = item.label;
-    iplSelect.appendChild(option);
-  });
+function normalizeAccountType(v) {
+  const x = String(v || "").toUpperCase();
+  return x === "PT" ? "PT" : "PERSONAL";
 }
 
-function toggleDocFields(role) {
-  const isAdmin = role === "ADMIN";
+function getDocType(role, accountType) {
+  if (role === "CLIENT" && accountType === "PERSONAL") return "IPL";
+  if (role === "CLIENT" && accountType === "PT") return "ADDENDUM";
+  if (role === "MITRA" && accountType === "PERSONAL") return "SPL";
+  if (role === "MITRA" && accountType === "PT") return "QUOTATION";
+  return null;
+}
 
-  if (docFields) {
-    docFields.style.display = isAdmin ? "none" : "block";
+function updateDocUi() {
+  if (selectedRole === "ADMIN") return;
+
+  const docType = getDocType(selectedRole, selectedAccountType) || "DOKUMEN";
+  if (docNumberLabel) docNumberLabel.textContent = `Nomor ${docType}`;
+
+  const placeholderMap = {
+    IPL: "Contoh: IPL-2024-001",
+    SPL: "Contoh: SPL-2024-001",
+    ADDENDUM: "Contoh: ADD-2024-001",
+    QUOTATION: "Contoh: QUO-2024-001"
+  };
+
+  if (docNumberInput) {
+    docNumberInput.placeholder = placeholderMap[docType] || "Masukkan nomor dokumen";
   }
 
-  if (adminCodeField) {
-    adminCodeField.style.display = isAdmin ? "block" : "none";
+  if (docHint) {
+    docHint.textContent = `Masukkan nomor ${docType}. Nomor ini harus sudah diregister oleh Admin.`;
   }
+}
+
+function toggleFields() {
+  const isAdmin = selectedRole === "ADMIN";
+
+  if (docFields) docFields.style.display = isAdmin ? "none" : "block";
+  if (adminCodeField) adminCodeField.style.display = isAdmin ? "block" : "none";
 
   if (isAdmin) {
-    // Bersihkan doc/template jika admin
-    if (iplSelect) iplSelect.selectedIndex = -1;
     if (docNumberInput) docNumberInput.value = "";
-
-    // Auto isi email admin jika kosong
-    if (emailInput && !emailInput.value) {
-      emailInput.value = ADMIN_EMAIL;
-    }
+    if (emailInput && !emailInput.value) emailInput.value = ADMIN_EMAIL;
+  } else {
+    updateDocUi();
   }
 }
 
 function setActiveRole(role) {
   selectedRole = role;
 
-  roleButtons.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.role === role);
+  // Sinkronkan radio
+  roleRadios.forEach((r) => {
+    r.checked = String(r.value).toUpperCase() === role;
   });
 
-  renderTemplateOptions(role);
-  toggleDocFields(role);
+  toggleFields();
 }
 
-roleButtons.forEach((btn) => {
-  btn.addEventListener("click", () => setActiveRole(btn.dataset.role));
+function setAccountType(accountType) {
+  selectedAccountType = normalizeAccountType(accountType);
+  if (selectedRole !== "ADMIN") updateDocUi();
+}
+
+// Event: radio role berubah
+roleRadios.forEach((r) => {
+  r.addEventListener("change", () => setActiveRole(String(r.value).toUpperCase()));
 });
 
 function savePendingSession(payload) {
@@ -92,70 +104,75 @@ function loadPendingSession() {
   }
 }
 
-function persistAccess({ role, template, docNumber, preview }) {
+function persistAccess({ role, docType, docNumber, accountType }) {
   localStorage.setItem(
     "iplAccess",
     JSON.stringify({
       role,
-      template: template || null,
+      documentType: docType || null,
       documentId: docNumber || null,
-      preview: preview || null,
+      accountType: accountType || null,
       at: new Date().toISOString()
     })
   );
 }
 
-// Optional helper: validate template exists (if function not present elsewhere)
-// If validateIplTemplate is defined in another module, this will be ignored.
-async function validateIplTemplate(path) {
-  if (!path) throw new Error("Template tidak valid");
-  const res = await fetch(path, { method: "GET" });
-  if (!res.ok) throw new Error("Template tidak ditemukan");
-  return { ok: true, path };
+// INIT dari URL (HARUS jalan selalu, bukan di dalam email-link flow)
+function initFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const role = (params.get("role") || "").toUpperCase();
+  const accountType = normalizeAccountType(params.get("accountType"));
+
+  if (role === "ADMIN" || role === "CLIENT" || role === "MITRA") {
+    setActiveRole(role);
+  } else {
+    setActiveRole(selectedRole);
+  }
+
+  setAccountType(accountType);
+
+  // Simpan agar konsisten dipakai request API berikutnya
+  localStorage.setItem("lw_account_type", selectedAccountType);
+  localStorage.setItem("lw_role", selectedRole);
 }
 
+initFromUrl();
+
 btnSend?.addEventListener("click", async () => {
-  const email = emailInput?.value.trim();
-  const templatePath = iplSelect?.value || "";
+  const email = emailInput?.value.trim() || "";
   const docNumber = docNumberInput?.value.trim() || "";
   const adminCode = adminCodeInput?.value.trim() || "";
 
   if (!email) return alert("Email wajib diisi");
 
-  // Simpan untuk auto-complete saat email-link dibuka (penting untuk device yang sama)
   localStorage.setItem("lw_last_email", email);
 
   if (selectedRole === "ADMIN") {
     if (email !== ADMIN_EMAIL) return alert(`Email admin wajib ${ADMIN_EMAIL}`);
     if (!adminCode) return alert("Kode admin wajib diisi");
   } else {
-    if (!templatePath) return alert("Pilih dokumen IPL/SPL terlebih dahulu");
-    if (!docNumber) return alert("Nomor IPL/SPL wajib diisi");
+    const docType = getDocType(selectedRole, selectedAccountType);
+    if (!docType) return alert("Konfigurasi role/accountType tidak valid");
+    if (!docNumber) return alert(`Nomor ${docType} wajib diisi`);
   }
 
   try {
-    let preview;
-    if (selectedRole !== "ADMIN") {
-      preview = await validateIplTemplate(templatePath);
-    }
-
-    // ADMIN: docType/docNumber/template tidak wajib
-    const docType =
-      selectedRole === "MITRA" ? "SPL" : selectedRole === "CLIENT" ? "IPL" : null;
+    const docType = selectedRole === "ADMIN" ? null : getDocType(selectedRole, selectedAccountType);
 
     await sendEmailOtp(email, {
       role: selectedRole,
       docType,
       docNumber: selectedRole === "ADMIN" ? null : docNumber,
-      template: selectedRole === "ADMIN" ? null : templatePath,
-      adminCode: selectedRole === "ADMIN" ? adminCode : undefined
+      template: null, // DISABLE template selection sepenuhnya
+      adminCode: selectedRole === "ADMIN" ? adminCode : undefined,
+      accountType: selectedAccountType
     });
 
     savePendingSession({
       role: selectedRole,
-      template: selectedRole === "ADMIN" ? null : templatePath,
+      docType,
       docNumber: selectedRole === "ADMIN" ? null : docNumber,
-      preview,
+      accountType: selectedAccountType,
       adminCode: selectedRole === "ADMIN" ? adminCode : undefined
     });
 
@@ -166,38 +183,40 @@ btnSend?.addEventListener("click", async () => {
   }
 });
 
+// Email-link completion
 (async function autoCompleteFromLink() {
   try {
     const isLink = await hasEmailOtpLink();
     if (!isLink) return;
 
-    const stored = loadPendingSession();
+    const stored = loadPendingSession() || {};
     const email = localStorage.getItem("lw_last_email") || emailInput?.value.trim();
-
     if (!email) return;
 
-    const role = stored?.role || selectedRole;
+    const role = (stored.role || selectedRole || "CLIENT").toUpperCase();
+    const accountType = normalizeAccountType(stored.accountType || localStorage.getItem("lw_account_type"));
+
     if (role === "ADMIN" && email !== ADMIN_EMAIL) return;
 
     await completeEmailOtpSignIn(email);
 
+    // Persist access for app guards & api headers
     persistAccess({
       role,
-      template: stored?.template || iplSelect?.value || null,
-      docNumber: stored?.docNumber || docNumberInput?.value || null,
-      preview: stored?.preview
+      docType: stored.docType || (role === "ADMIN" ? null : getDocType(role, accountType)),
+      docNumber: stored.docNumber || null,
+      accountType
     });
 
-    const finalDocNumber =
-      role === "ADMIN" ? null : stored?.docNumber || docNumberInput?.value || null;
+    localStorage.setItem("lw_role", role);
+    localStorage.setItem("lw_account_type", accountType);
 
-    if (role !== "ADMIN" && finalDocNumber) {
-      localStorage.setItem("lw_doc_number", finalDocNumber);
+    if (role !== "ADMIN" && stored.docNumber) {
+      localStorage.setItem("lw_doc_number", stored.docNumber);
+      if (stored.docType) localStorage.setItem("lw_doc_type", stored.docType);
     }
 
-    localStorage.setItem("lw_role", role);
-
-    if (role === "ADMIN" && stored?.adminCode) {
+    if (role === "ADMIN" && stored.adminCode) {
       sessionStorage.setItem("lw_admin_code", stored.adminCode);
     }
 
@@ -207,17 +226,4 @@ btnSend?.addEventListener("click", async () => {
   } catch (err) {
     console.error("Auto sign-in gagal", err);
   }
-  function initRoleFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const role = (params.get("role") || "").toUpperCase();
-
-  if (role === "ADMIN" || role === "CLIENT" || role === "MITRA") {
-    setActiveRole(role);
-    return;
-  }
-  setActiveRole(selectedRole); // fallback default
-}
-
-initRoleFromUrl();
-
 })();
