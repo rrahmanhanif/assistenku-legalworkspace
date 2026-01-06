@@ -85,19 +85,11 @@ async function validateRegistry(payload) {
 
 export async function sendEmailOtp(
   email,
-  { role, docType, docNumber, template, adminCode }
+  { role, docType, docNumber, template, adminCode, accountType }
 ) {
-  const auth = getFirebaseAuth();
-  const baseUrl = window.LEGALWORKSPACE_BASE_URL || window.location.origin;
+...
+  await validateRegistry({ email, role, docNumber, docType, template, adminCode, accountType });
 
-  await validateRegistry({
-    email,
-    role,
-    docType,
-    docNumber,
-    template,
-    adminCode
-  });
 
   const actionCodeSettings = {
     url: `${baseUrl}/apps/login/?role=${encodeURIComponent(
