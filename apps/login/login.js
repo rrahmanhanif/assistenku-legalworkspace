@@ -207,4 +207,17 @@ btnSend?.addEventListener("click", async () => {
   } catch (err) {
     console.error("Auto sign-in gagal", err);
   }
+  function initRoleFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const role = (params.get("role") || "").toUpperCase();
+
+  if (role === "ADMIN" || role === "CLIENT" || role === "MITRA") {
+    setActiveRole(role);
+    return;
+  }
+  setActiveRole(selectedRole); // fallback default
+}
+
+initRoleFromUrl();
+
 })();
