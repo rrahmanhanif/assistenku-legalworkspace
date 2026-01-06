@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LegalWorkspace</title>
+  <title>LegalWorkspace | Assistenku</title>
 
-  <!-- Icons / Styles -->
   <link rel="icon" type="image/png" href="/assets/img/logo.png" />
-  <link rel="stylesheet" href="/assets/css/theme.css" />
 
-  <!-- Global Config & API -->
+  <!-- Global Config & API (tetap) -->
   <script src="/assets/config.js"></script>
   <script type="module" src="/assets/apiClient.js"></script>
 
@@ -21,28 +19,213 @@
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <style>
-    :root {
+    :root{
+      --bg: #f6f8fc;
+      --card: rgba(255,255,255,0.92);
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: rgba(15,23,42,0.10);
+      --shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
       --primary: #0a58ff;
-      --primary-dark: #0847cc;
-      --bg: #f4f7fb;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
+      --primary2: #38bdf8;
+      --radius: 18px;
     }
 
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(10,88,255,0.08), transparent 28%),
-        radial-gradient(circle at 80% 10%, rgba(56,189,248,0.1), transparent 26%),
-        var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
       color: var(--text);
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
+      background:
+        radial-gradient(1000px 400px at 10% 0%, rgba(10,88,255,0.14), transparent 55%),
+        radial-gradient(900px 380px at 90% 10%, rgba(56,189,248,0.18), transparent 55%),
+        var(--bg);
+      line-height: 1.55;
     }
+
+    a { color: inherit; text-decoration: none; }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+    @media (min-width: 768px) { .wrap { padding: 28px; } }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      background: rgba(246, 248, 252, 0.72);
+      border-bottom: 1px solid var(--border);
+    }
+    .hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      min-width: 0;
+    }
+    .brand img { width: 34px; height: 34px; border-radius: 10px; }
+    .brand .name { font-weight: 800; letter-spacing: -0.02em; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.65);
+      white-space: nowrap;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 99px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.12);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 22px 0 10px;
+    }
+    .heroGrid{
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+    }
+    @media (min-width: 900px){
+      .heroGrid { grid-template-columns: 1.2fr 0.8fr; gap: 18px; }
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    @media (min-width: 768px){ .panel { padding: 22px; } }
+
+    .pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0b3aa5;
+      background: rgba(10,88,255,0.10);
+      border: 1px solid rgba(10,88,255,0.20);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+    h1{
+      margin: 10px 0 8px;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+    @media (min-width: 768px){ h1{ font-size: 40px; } }
+    .lead { color: var(--muted); margin: 0 0 14px; font-size: 15px; }
+    @media (min-width: 768px){ .lead{ font-size: 16px; } }
+
+    .btnRow{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-weight: 800;
+      font-size: 14px;
+      background: rgba(255,255,255,0.75);
+      transition: transform 0.08s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 20px rgba(2,6,23,0.10); }
+    .btnPrimary{
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white;
+      border-color: rgba(10,88,255,0.30);
+    }
+    .btnSoft{
+      background: rgba(10,88,255,0.06);
+      border-color: rgba(10,88,255,0.18);
+      color: #0b3aa5;
+    }
+    .btnWarn{
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: #7c2d12;
+    }
+
+    /* Cards grid */
+    .sectionTitle{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin: 18px 0 10px;
+    }
+    .sectionTitle h2{
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .sectionTitle p{
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid{
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px){
+      .grid{ grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    }
+
+    .card h3{ margin: 0 0 6px; font-size: 16px; letter-spacing: -0.02em; }
+    .card p{ margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+
+    .stack{ display: grid; gap: 8px; }
+
+    /* Side panel */
+    .miniTitle{ margin: 0 0 10px; font-size: 14px; color: var(--muted); font-weight: 800; }
+    .kpi{
+      display: grid;
+      gap: 10px;
+    }
+    .kpiItem{
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.65);
+    }
+    .kpiItem .t{ font-size: 12px; color: var(--muted); font-weight: 800; }
+    .kpiItem .v{ font-size: 14px; font-weight: 900; margin-top: 2px; }
+
+    footer{
+      padding: 24px 0 34px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer a{ color: var(--primary); font-weight: 800; }
   </style>
 
-  <!-- PWA bootstrap -->
   <script type="module">
     import { setupPwaInstall } from "/assets/pwa.js";
     setupPwaInstall({ buttonId: "btnInstall", autoPromptOnFirstClick: true });
@@ -51,93 +234,104 @@
 
 <body>
   <header>
-    <a href="#" class="brand">
-      <img src="/assets/img/logo.png" alt="LegalWorkspace" />
-      <span>LegalWorkspace</span>
-    </a>
-    <span class="domain-tag">legalworkspace.assistenku.com siap diakses</span>
+    <div class="wrap hdr">
+      <a class="brand" href="/">
+        <img src="/assets/img/logo.png" alt="LegalWorkspace" />
+        <div class="name">LegalWorkspace</div>
+      </a>
+      <div class="tag"><span class="dot"></span> legalworkspace.assistenku.com siap diakses</div>
+    </div>
   </header>
 
-  <main>
-    <!-- HERO -->
+  <main class="wrap">
     <section class="hero">
-      <div>
-        <p class="pill">Workspace</p>
-        <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
+      <div class="heroGrid">
+        <!-- Main hero -->
+        <div class="panel">
+          <div class="pill">Workspace • Dokumen • Audit</div>
+          <h1>Kelola dokumen dan workflow legal dalam satu tempat</h1>
+          <p class="lead">
+            Login berbasis dokumen (IPL/SPL), audit log append-only, dan alur approval yang siap dipakai.
+            Fokus V1: cepat digunakan, aman, dan rapi untuk operasional.
+          </p>
 
-        <div class="actions">
-          <a class="btn-primary" href="apps/login/index.html?role=ADMIN">
-            Masuk sebagai Admin
-          </a>
-          <a class="btn-secondary" href="apps/login/index.html?role=CLIENT&accountType=PERSONAL">
-            Client Non-PT
-          </a>
-          <a class="btn-secondary" href="apps/login/index.html?role=CLIENT&accountType=PT">
-            Client PT
-          </a>
-          <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PERSONAL">
-            Mitra Non-PT
-          </a>
-          <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PT">
-            Mitra PT
-          </a>
+          <div class="btnRow">
+            <a class="btn btnPrimary" href="apps/login/index.html?role=ADMIN">Masuk sebagai Admin</a>
+            <a class="btn btnSoft" href="apps/login/index.html?role=CLIENT&accountType=PERSONAL">Client Non-PT</a>
+            <a class="btn btnSoft" href="apps/login/index.html?role=CLIENT&accountType=PT">Client PT</a>
+            <a class="btn btnWarn" href="apps/login/index.html?role=MITRA&accountType=PERSONAL">Mitra Non-PT</a>
+            <a class="btn btnWarn" href="apps/login/index.html?role=MITRA&accountType=PT">Mitra PT</a>
+            <button id="btnInstall" class="btn">Install App</button>
+          </div>
         </div>
+
+        <!-- Side panel -->
+        <aside class="panel">
+          <div class="miniTitle">Status Sistem</div>
+          <div class="kpi">
+            <div class="kpiItem">
+              <div class="t">API Base</div>
+              <div class="v" id="apiBaseText">https://api.assistenku.com</div>
+            </div>
+            <div class="kpiItem">
+              <div class="t">Akses Test</div>
+              <div class="v"><a href="/apps/smoke.html">Smoke Test API</a></div>
+            </div>
+            <div class="kpiItem">
+              <div class="t">Mode</div>
+              <div class="v">Production</div>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
 
-    <!-- QUICK ACCESS -->
     <section>
-      <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <h2 style="margin: 0;">Akses cepat</h2>
-        <p style="margin: 0; color: var(--muted);">
-          Pilih portal sesuai peran pengguna.
-        </p>
+      <div class="sectionTitle">
+        <h2>Akses cepat</h2>
+        <p>Pilih portal sesuai peran pengguna</p>
       </div>
 
       <div class="grid">
-        <!-- ADMIN -->
-        <div class="card">
+        <div class="panel card">
           <h3>Panel Admin</h3>
-          <p>Akses penuh monitoring client dan mitra berbasis IPL/SPL digital.</p>
-          <a class="btn-primary" href="apps/login/index.html?role=ADMIN">
-            Masuk sebagai Admin
-          </a>
-        </div>
-
-        <!-- CLIENT -->
-        <div class="card">
-          <h3>Portal Client</h3>
-          <p>Akses dokumen, approval, dan status penandatanganan.</p>
-          <div class="actions" style="gap:8px; flex-direction:column;">
-            <a class="btn-secondary" href="apps/login/index.html?role=CLIENT&accountType=PERSONAL">
-              Client Non-PT
-            </a>
-            <a class="btn-secondary" href="apps/login/index.html?role=CLIENT&accountType=PT">
-              Client PT
-            </a>
+          <p>Monitoring client & mitra, dokumen registry, invoice, dan audit trail.</p>
+          <div class="stack">
+            <a class="btn btnPrimary" href="apps/login/index.html?role=ADMIN">Masuk sebagai Admin</a>
           </div>
         </div>
 
-        <!-- MITRA -->
-        <div class="card">
+        <div class="panel card">
+          <h3>Portal Client</h3>
+          <p>Approval, tanda tangan, status dokumen, dan histori dokumen terkait IPL.</p>
+          <div class="stack">
+            <a class="btn btnSoft" href="apps/login/index.html?role=CLIENT&accountType=PERSONAL">Client Non-PT</a>
+            <a class="btn btnSoft" href="apps/login/index.html?role=CLIENT&accountType=PT">Client PT</a>
+          </div>
+        </div>
+
+        <div class="panel card">
           <h3>Portal Mitra</h3>
-          <p>Absensi, worklog, dan alur kerja mitra.</p>
-          <div class="actions" style="gap:8px; flex-direction:column;">
-            <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PERSONAL">
-              Mitra Non-PT
-            </a>
-            <a class="btn-secondary" href="apps/login/index.html?role=MITRA&accountType=PT">
-              Mitra PT
-            </a>
+          <p>Worklog, upload bukti, dan submit laporan kerja berbasis SPL.</p>
+          <div class="stack">
+            <a class="btn btnWarn" href="apps/login/index.html?role=MITRA&accountType=PERSONAL">Mitra Non-PT</a>
+            <a class="btn btnWarn" href="apps/login/index.html?role=MITRA&accountType=PT">Mitra PT</a>
           </div>
         </div>
       </div>
     </section>
+
+    <footer>
+      © 2024 LegalWorkspace by Assistenku. Tes API: <a href="/apps/smoke.html">Smoke Test</a>
+    </footer>
   </main>
 
-  <footer>
-    © 2024 LegalWorkspace.  
-    Tes API: <a href="/apps/smoke.html">Smoke Test</a>
-  </footer>
+  <script>
+    try {
+      const base = window.ASSISTENKU_API_BASE || "https://api.assistenku.com";
+      const el = document.getElementById("apiBaseText");
+      if (el) el.textContent = base;
+    } catch {}
+  </script>
 </body>
 </html>
