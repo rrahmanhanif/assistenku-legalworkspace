@@ -1,34 +1,23 @@
-async function submitSignature(logId, signatureBase64, session) {
-  const { error } = await supabase
-    .from("daily_work_logs")
-    .update({
-      signature_data: signatureBase64,
-      signed_at: new Date().toISOString(),
-      status: "SIGNED_INTERNAL"
-    })
-    .eq("id", logId);
+import { apiFetch } from "/assets/apiClient.js";
 
-  if (error) throw error;
-
-  // Generate Legal PDF
-  await fetch("/functions/v1/generate-SPL-PDF-legal-grade", {
+export async function submitSignature(logId, signaturePayload) {
+  await apiFetch("/api/client/worklogs/sign", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`
+    body: {
+      log_id: logId,
+      signature: signaturePayload,
     },
-    body: JSON.stringify({ log_id: logId })
   });
 
-  // Send to PrivyID
-  await fetch("/functions/v1/send-to-privy", {
+  await apiFetch("/api/legal/generate-spl-pdf", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`
-    },
-    body: JSON.stringify({ log_id: logId })
+    body: { log_id: logId },
   });
 
-  alert("SPL ditandatangani & dikirim ke PrivyID");
+  await apiFetch("/api/legal/send-to-privy", {
+    method: "POST",
+    body: { log_id: logId },
+  });
+
+  alert("SPL ditandatangani & dikirim ke PrivyID via API terpusat");
 }
