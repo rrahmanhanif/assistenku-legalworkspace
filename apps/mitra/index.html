@@ -7,6 +7,9 @@
 
   <link rel="stylesheet" href="/assets/css/app.css" />
 
+  <script src="/assets/config.js"></script>
+  <script type="module" src="/assets/apiClient.js"></script>
+
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#0a58ff" />
@@ -32,20 +35,94 @@
   </script>
 </head>
 
-
 <body>
   <header>
     <div>
-      <p class="eyebrow">Akses Mitra Kontraktual</p>
-      <h1>Kendali SPL & Kinerja</h1>
+      <p class="eyebrow">Portal Mitra</p>
+      <h1>Dashboard Kinerja</h1>
       <p class="muted">
-        Isi kinerja harian, unggah bukti kerja, dan pastikan status legal mengikuti
-        lifecycle resmi.
+        Mitra mengisi laporan harian, unggah bukti, lalu submit. Setelah submit status akan LOCKED.
       </p>
     </div>
-
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
+
+  <main class="container">
+    <section class="grid three">
+      <article class="card highlight">
+        <p class="eyebrow">Status</p>
+        <h2 id="workStatus">-</h2>
+        <p class="muted">Status laporan kerja terakhir.</p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">Evidence</p>
+        <h2 id="evidenceCount">-</h2>
+        <p class="muted">Jumlah bukti yang sudah diunggah.</p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">Audit</p>
+        <h2>Append-only</h2>
+        <p class="muted">Semua aksi tercatat: login, submit, upload bukti, lock, export.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Laporan Harian</h2>
+          <p class="muted">Isi tabel dinamis sesuai kebutuhan proyek.</p>
+        </div>
+        <div class="card-actions">
+          <button id="btnAddRow" class="secondary">Tambah Baris</button>
+          <button id="btnSubmit" class="primary">Submit & Lock</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="workTable" class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Jam</th>
+              <th>Catatan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="upload-wrap">
+        <label for="evidenceFile" class="muted">Unggah bukti (foto/dokumen):</label>
+        <input id="evidenceFile" type="file" multiple />
+        <button id="btnUploadEvidence" class="secondary">Upload Evidence</button>
+      </div>
+
+      <div class="muted" id="submitHint" style="margin-top: 10px;">
+        Setelah submit, data menjadi <strong>LOCKED</strong> dan tidak bisa diubah.
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Audit Trail</h2>
+          <p class="muted">Riwayat aktivitas penting mitra.</p>
+        </div>
+      </div>
+      <div id="auditLog"></div>
+    </section>
+
+    <div class="actions">
+      <button id="btnInstall" class="primary">Install App</button>
+    </div>
+  </main>
+
+  <script type="module" src="/apps/mitra/dashboard.js"></script>
+</body>
+</html>
