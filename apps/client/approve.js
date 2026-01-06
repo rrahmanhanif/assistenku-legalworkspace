@@ -1,25 +1,22 @@
-async function approve(id) {
+import { apiFetch } from "/assets/apiClient.js";
+
+export async function approve(id) {
   if (!confirm("Setujui & kunci SPL?")) return;
 
-  const { error } = await supabase
-    .from("daily_work_logs")
-    .update({
-      status: "APPROVED",
-      approved_at: new Date().toISOString()
-    })
-    .eq("id", id);
+  try {
+    await apiFetch("/api/client/worklogs/approve", {
+      method: "POST",
+      body: { id }
+    });
 
-  if (error) {
-    alert(error.message);
-    return;
+    await apiFetch("/api/legal/generate-spl-pdf", {
+      method: "POST",
+      body: { log_id: id }
+    });
+
+    alert("Disetujui & PDF dibuat lewat API terpusat");
+  } catch (err) {
+    console.error(err);
+    alert(err?.message || "Gagal menyetujui log");
   }
-
-  await fetch("/functions/v1/generate-SPL-PDF-legal-grade", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ log_id: id })
-  });
-
-  alert("Disetujui & PDF dibuat");
-  loadWorks();
 }
