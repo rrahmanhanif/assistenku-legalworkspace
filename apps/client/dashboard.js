@@ -1,5 +1,6 @@
 import { signOutFirebase } from "../shared/firebase.js";
-import { apiFetch, apiWhoAmI } from "/assets/apiClient.js";
+import { apiFetch } from "/shared/apiClient.js";
+import { clearPortalSession } from "/shared/session.js";
 
 let spls = [];
 let documentPipeline = [];
@@ -11,7 +12,7 @@ function formatStatus(status) {
     FINAL: "Final",
     LOCKED: "Terkunci",
     DRAFT: "Draft",
-    PAID: "Dibayar",
+    PAID: "Dibayar"
   };
   return map[status] || status || "-";
 }
@@ -25,63 +26,65 @@ function statusChipClass(status) {
 
 function appendAuditEntry(action, hash = "-") {
   auditLog.unshift({
-    time: new Date().toLocaleString("id-ID"),
     action,
     hash,
+    time: new Date().toLocaleString("id-ID", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
   });
 }
 
 function renderSpls() {
-  const tbody = document.querySelector("#splTable tbody");
-  if (!tbody) return;
+  const container = document.getElementById("splList");
+  if (!container) return;
 
-  tbody.innerHTML = "";
+  container.innerHTML = "";
 
   if (!spls.length) {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="6" class="muted">Belum ada SPL dari API.</td>`;
-    tbody.appendChild(row);
+    container.innerHTML = `<p class="muted">Belum ada SPL yang terdaftar.</p>`;
     return;
   }
 
   spls.forEach((spl) => {
-    const row = document.createElement("tr");
+    const row = document.createElement("div");
+    row.className = "row";
     row.innerHTML = `
-      <td>${spl.id || "-"}</td>
-      <td>${spl.client || "-"}</td>
-      <td>${spl.mitra || "-"}</td>
-      <td><span class="${statusChipClass(spl.status)}">${formatStatus(spl.status)}</span></td>
-      <td>${(spl.documents || []).join(", ")}</td>
-      <td class="mono">${spl.hash || "-"}</td>
+      <div>
+        <div><strong>${spl.number || "-"}</strong></div>
+        <div class="muted">${spl.client || spl.owner || "-"}</div>
+      </div>
+      <div class="${statusChipClass(spl.status)}">${formatStatus(spl.status)}</div>
     `;
-    tbody.appendChild(row);
+    container.appendChild(row);
   });
 }
 
 function renderPipeline() {
-  const list = document.getElementById("pipelineList");
-  if (!list) return;
+  const container = document.getElementById("pipelineList");
+  if (!container) return;
 
-  list.innerHTML = "";
+  container.innerHTML = "";
 
   if (!documentPipeline.length) {
-    list.innerHTML = `<li class="muted">Tahapan pipeline belum tersedia.</li>`;
+    container.innerHTML = `<p class="muted">Belum ada progres dokumen.</p>`;
     return;
   }
 
-  documentPipeline.forEach((step) => {
-    const li = document.createElement("li");
-    li.className = "pipeline-step";
-    li.innerHTML = `
-      <div class="row" style="justify-content: space-between; align-items: center;">
-        <div>
-          <div class="step-title">${step.title || "-"}</div>
-          <div class="muted">${step.description || ""}</div>
-        </div>
-        <span class="chip ${step.status?.toLowerCase() || ""}">${step.status || "PENDING"}</span>
+  documentPipeline.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div>
+        <div><strong>${item.title || item.step || "-"}</strong></div>
+        <div class="muted">${item.note || "-"}</div>
       </div>
+      <div class="${statusChipClass(item.status)}">${formatStatus(item.status)}</div>
     `;
-    list.appendChild(li);
+    container.appendChild(row);
   });
 }
 
@@ -116,9 +119,12 @@ function bindActions() {
 
   document.getElementById("btnRefresh")?.addEventListener("click", () => loadData());
 
+  document.getElementById("btnLoadInvoices")?.addEventListener("click", () => loadData());
+
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    clearPortalSession();
     await signOutFirebase();
-    window.location.href = "/";
+    window.location.href = "/apps/login/";
   });
 }
 
@@ -130,14 +136,6 @@ async function loadData() {
   if (statusEl) statusEl.textContent = "Memuat...";
   if (privyStatus) privyStatus.textContent = "Memuat...";
   if (evidenceStatus) evidenceStatus.textContent = "Memuat...";
-
-  try {
-    const who = await apiWhoAmI();
-    appendAuditEntry(`Autentikasi berhasil untuk ${who?.email || "-"}`);
-  } catch (err) {
-    console.error(err);
-    appendAuditEntry("Gagal mengambil identitas", err?.message || "-");
-  }
 
   try {
     const data = await apiFetch("/api/client/invoices/list", { method: "GET" });
