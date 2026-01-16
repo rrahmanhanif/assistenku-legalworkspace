@@ -10,13 +10,7 @@
 
   <link rel="stylesheet" href="/apps/login/style.css" />
 
-  <!-- Firebase config (wajib ada di server) -->
-  <script src="/assets/firebase-config.js"></script>
-
-  <!-- Base URL untuk callback email-link -->
-  <script>
-    window.LEGALWORKSPACE_BASE_URL = "https://legalworkspace.assistenku.com";
-  </script>
+  <script src="/config.js"></script>
 
   <!-- Firebase Web SDK (CDN, ESM) -->
   <script type="module">
@@ -24,6 +18,7 @@
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
   </script>
 </head>
+
 <body>
   <div class="login-container">
     <div class="login-card">
@@ -33,7 +28,7 @@
       </p>
 
       <!-- ROLE SWITCHER -->
-      <div class="role-switch">
+      <div class="role-switcher">
         <label class="role-item">
           <input type="radio" name="role" value="ADMIN" checked />
           <span>Admin</span>
@@ -58,25 +53,38 @@
 
       <!-- DOC FIELDS -->
       <div id="docFields">
-  <label id="docNumberLabel" for="docNumber">Nomor Dokumen</label>
-  <input
-    id="docNumber"
-    type="text"
-    placeholder="Masukkan nomor dokumen"
-    autocomplete="off"
-  />
-  <small id="docHint" class="helper">
-    Nomor dokumen harus sudah diregister oleh Admin.
-  </small>
-</div>
+        <label for="accountType">Jenis Akun</label>
+        <select id="accountType">
+          <option value="PERSONAL">Personal</option>
+          <option value="PT">PT</option>
+        </select>
 
+        <label for="docType">Jenis Dokumen</label>
+        <select id="docType">
+          <option value="IPL">IPL</option>
+          <option value="SPL">SPL</option>
+          <option value="ADDENDUM">Addendum</option>
+          <option value="QUOTATION">Quotation</option>
+        </select>
+
+        <label id="docNumberLabel" for="docNumber">Nomor Dokumen</label>
+        <input
+          id="docNumber"
+          type="text"
+          placeholder="Masukkan nomor dokumen"
+          autocomplete="off"
+        />
+        <small id="docHint" class="helper">
+          Nomor dokumen harus sudah diregister oleh Admin.
+        </small>
+      </div>
 
       <div id="adminCodeField" style="display:none">
         <label for="adminCode">Kode Admin</label>
         <input
           id="adminCode"
           type="password"
-          placeholder="Masukkan kode admin"
+          placeholder="309309"
           autocomplete="one-time-code"
         />
       </div>
