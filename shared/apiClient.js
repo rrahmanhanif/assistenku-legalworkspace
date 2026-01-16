@@ -1,6 +1,7 @@
 import { loadPortalSession } from "/shared/session.js";
 
-export const API_BASE = (window.__API_BASE__ || "https://api.assistenku.com").replace(/\/$/, "");
+export const API_BASE = (window.__API_BASE__ || "https://api.assistenku.com")
+  .replace(/\/$/, "");
 
 export async function apiFetch(
   path,
@@ -28,7 +29,8 @@ export async function apiFetch(
   };
 
   if (body !== undefined) {
-    fetchOptions.body = typeof body === "string" ? body : JSON.stringify(body);
+    fetchOptions.body =
+      typeof body === "string" ? body : JSON.stringify(body);
   }
 
   const response = await fetch(url, fetchOptions);
@@ -45,7 +47,8 @@ export async function apiFetch(
   }
 
   if (!response.ok) {
-    const message = data?.message || `Request gagal (${response.status})`;
+    const message =
+      data?.message || `Request gagal (${response.status})`;
     throw new Error(message);
   }
 
