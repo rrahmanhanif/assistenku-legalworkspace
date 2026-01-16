@@ -3,7 +3,6 @@ import {
   hasEmailOtpLink,
   sendEmailLink
 } from "../shared/firebase.js";
-
 import { apiFetch } from "/shared/apiClient.js";
 import { savePortalSession } from "/shared/session.js";
 
@@ -78,7 +77,6 @@ function toggleFields() {
 
 function syncDocTypeDefault() {
   if (!docTypeSelect) return;
-
   const defaultType = getDefaultDocType(selectedRole, selectedAccountType);
   if (!docTypeTouched || !docTypeSelect.value) {
     docTypeSelect.value = defaultType;
@@ -100,7 +98,6 @@ function setActiveRole(role) {
 function setAccountType(accountType) {
   selectedAccountType = normalizeAccountType(accountType);
   if (accountTypeSelect) accountTypeSelect.value = selectedAccountType;
-
   if (!docTypeTouched) syncDocTypeDefault();
   updateDocUi();
 }
@@ -167,7 +164,6 @@ btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim() || "";
   const docNumber = docNumberInput?.value.trim() || "";
   const adminCode = adminCodeInput?.value.trim() || "";
-
   const accountType = normalizeAccountType(accountTypeSelect?.value || selectedAccountType);
   const docType = docTypeSelect?.value || getDefaultDocType(selectedRole, accountType);
 
@@ -236,6 +232,7 @@ btnSend?.addEventListener("click", async () => {
     if (!email) {
       email = window.prompt("Masukkan email untuk menyelesaikan login:") || "";
     }
+
     if (!email) return;
 
     const role = (stored.role || selectedRole || "CLIENT").toUpperCase();
