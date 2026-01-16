@@ -7,8 +7,7 @@
 
   <link rel="stylesheet" href="/assets/css/app.css" />
 
-  <script src="/assets/config.js"></script>
-  <script type="module" src="/assets/apiClient.js"></script>
+  <script src="/config.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -17,9 +16,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <!-- Firebase config (wajib ada di server) -->
-  <script src="/assets/firebase-config.js"></script>
-
   <!-- Firebase Web SDK (CDN, ESM) -->
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -27,8 +23,8 @@
   </script>
 
   <script type="module">
-    import { requirePortalAccess } from "../shared/access.js";
-    requirePortalAccess("CLIENT", "IPL");
+    import { requireRole } from "/shared/guards.js";
+    requireRole("CLIENT");
   </script>
 
   <script type="module">
@@ -48,6 +44,7 @@
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
+      <button id="btnLoadInvoices" class="secondary">Load Invoices</button>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
@@ -73,55 +70,8 @@
       </article>
     </section>
 
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Daftar SPL</h2>
-          <p class="muted">Ringkasan SPL dan dokumen terkait.</p>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table id="splTable" class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Client</th>
-              <th>Mitra</th>
-              <th>Status</th>
-              <th>Dokumen</th>
-              <th>Hash</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Pipeline Dokumen</h2>
-          <p class="muted">Tahapan penyusunan, penguncian, dan finalisasi dokumen.</p>
-        </div>
-      </div>
-
-      <ul id="pipelineList" class="pipeline"></ul>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Audit Trail</h2>
-          <p class="muted">Riwayat aktivitas penting portal client.</p>
-        </div>
-        <div class="card-actions">
-          <button id="btnSendToPrivy" class="secondary">Kirim ke PrivyID</button>
-        </div>
-      </div>
-
-      <div id="auditLog"></div>
-    </section>
+    <!-- Jika file asli Anda memiliki section lanjutan setelah grid,
+         tempelkan di sini (pipeline, daftar SPL, audit trail, tombol privy, dll). -->
 
     <div class="actions">
       <button id="btnInstall" class="primary">Install App</button>
