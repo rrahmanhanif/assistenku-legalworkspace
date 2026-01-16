@@ -45,7 +45,7 @@ export function waitForAuthReady(timeoutMs = 15000) {
     const unsub = onAuthStateChanged(auth, (user) => {
       clearTimeout(timer);
       unsub();
-      resolve(user || null);
+      resolve(user);
     });
   });
 }
@@ -53,9 +53,7 @@ export function waitForAuthReady(timeoutMs = 15000) {
 export async function getFirebaseIdToken(forceRefresh = false) {
   const auth = getFirebaseAuth();
   const user = auth.currentUser;
-
   if (!user) return null;
-
   try {
     return await getIdToken(user, forceRefresh);
   } catch {
