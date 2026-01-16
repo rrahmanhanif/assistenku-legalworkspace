@@ -7,8 +7,7 @@
 
   <link rel="stylesheet" href="/assets/css/app.css" />
 
-  <script src="/assets/config.js"></script>
-  <script type="module" src="/assets/apiClient.js"></script>
+  <script src="/config.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -17,7 +16,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
@@ -25,7 +23,7 @@
 
   <!-- Guard Role -->
   <script type="module">
-    import { requireRole } from "../shared/auth-guard.js";
+    import { requireRole } from "/shared/guards.js";
     requireRole("MITRA");
   </script>
 
@@ -46,6 +44,7 @@
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
+      <button id="btnLoadWorklogs" class="secondary">Load Worklogs</button>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
@@ -75,37 +74,52 @@
       <div class="card-header">
         <div>
           <h2>Laporan Harian</h2>
-          <p class="muted">Isi tabel dinamis sesuai kebutuhan proyek.</p>
+          <p class="muted">Simpan draft dan unggah bukti kerja harian via signed URL.</p>
         </div>
         <div class="card-actions">
-          <button id="btnAddRow" class="secondary">Tambah Baris</button>
-          <button id="btnSubmit" class="primary">Submit & Lock</button>
+          <button id="btnSubmit" class="primary">Submit</button>
+          <button id="btnLock" class="secondary">Lock</button>
         </div>
       </div>
 
-      <div class="table-wrap">
-        <table id="workTable" class="table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Jam</th>
-              <th>Catatan</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <div id="errorBox" class="muted" style="margin-bottom: 12px;"></div>
+      <div id="loadingIndicator" class="muted" style="display:none; margin-bottom: 12px;">Memproses...</div>
+
+      <form id="worklogForm" class="form-grid">
+        <label for="docNumberInput">Nomor Dokumen</label>
+        <input id="docNumberInput" type="text" placeholder="SPL-2024-001" required />
+
+        <label for="worklogDate">Tanggal</label>
+        <input id="worklogDate" type="date" required />
+
+        <label for="worklogHours">Jam</label>
+        <input id="worklogHours" type="number" min="0" step="0.25" placeholder="8" required />
+
+        <label for="worklogNotes">Catatan</label>
+        <input id="worklogNotes" type="text" placeholder="Ringkasan pekerjaan" />
+
+        <button id="btnSaveDraft" type="submit" class="primary">Simpan DRAFT</button>
+      </form>
 
       <div class="upload-wrap">
         <label for="evidenceFile" class="muted">Unggah bukti (foto/dokumen):</label>
         <input id="evidenceFile" type="file" multiple />
-        <button id="btnUploadEvidence" class="secondary">Upload Evidence</button>
+        <button id="btnUploadEvidence" class="secondary">Upload Bukti</button>
       </div>
 
       <div class="muted" id="submitHint" style="margin-top: 10px;">
-        Setelah submit, data menjadi <strong>LOCKED</strong> dan tidak bisa diubah.
+        Setelah submit, data dapat dikunci oleh sistem dan tidak bisa diubah.
       </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Daftar Worklogs</h2>
+          <p class="muted">Ringkasan worklog beserta bukti yang sudah diunggah.</p>
+        </div>
+      </div>
+      <div id="worklogsList"></div>
     </section>
 
     <section class="card">
@@ -123,6 +137,6 @@
     </div>
   </main>
 
-  <script type="module" src="/apps/mitra/dashboard.js"></script>
+  <script type="module" src="/apps/mitra/mitra.js"></script>
 </body>
 </html>
