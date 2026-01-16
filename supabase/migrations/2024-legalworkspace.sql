@@ -1,157 +1,164 @@
--- supabase/migrations/2024-legalworkspace.sql
--- LegalWorkspace (Assistenku) - Base schema
--- Catatan: service_role Supabase bypass RLS, jadi RLS aman dipakai walau akses dilakukan via /api (server-side).
+-- supabase/migrations/2024-legalworkspace-portal.sql
+-- LegalWorkspace portal schema additions (legal_registry, audit_log, worklogs, invoices)
 
--- Recommended extensions
 create extension if not exists pgcrypto;
 
 -- =========================================
--- 1) REGISTRY (dokumen + role + email allowlist)
+-- Helpers
 -- =========================================
-create table if not exists public.registry (
-  id bigserial primary key,
-  role text not null check (role in ('ADMIN', 'CLIENT', 'MITRA')),
-  doc_type text not null, -- contoh: IPL, ADDENDUM, SPL, QUOTATION, ADMIN
-  doc_number text not null,
-  scope text not null, -- contoh: PROJECT-ALPHA / IPL-CLIENT-XYZ / dsb
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create or replace function public.audit_log_append_only()
+returns trigger
+language plpgsql
+as $$
+begin
+  raise exception 'audit_log is append-only';
+end;
+$$;
+
+-- =========================================
+-- A) legal_registry
+-- =========================================
+create table if not exists public.legal_registry (
+  id uuid primary key default gen_random_uuid(),
+  role text not null check (role in ('CLIENT','MITRA')),
   email text not null,
-  name text null,
+  account_type text not null check (account_type in ('PT','PERSONAL')),
+  doc_type text not null check (doc_type in ('IPL','SPL','ADDENDUM','QUOTATION')),
+  doc_number text not null,
+  template text null,
+  meta jsonb not null default '{}'::jsonb,
   is_active boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint legal_registry_role_email_doc_uq unique (role, email, doc_type, doc_number)
 );
 
--- Unique constraint mengikuti dev-seed Anda: ON CONFLICT (role, doc_number)
-create unique index if not exists registry_role_doc_number_uq
-  on public.registry (role, doc_number);
+create index if not exists legal_registry_gate_idx
+  on public.legal_registry (role, email, account_type, doc_type, doc_number, is_active);
 
-create index if not exists registry_doc_number_idx
-  on public.registry (doc_number);
+drop trigger if exists legal_registry_set_updated_at on public.legal_registry;
+create trigger legal_registry_set_updated_at
+  before update on public.legal_registry
+  for each row
+  execute function public.set_updated_at();
 
-create index if not exists registry_email_idx
-  on public.registry (email);
-
-alter table public.registry enable row level security;
-
--- Tidak ada policy -> anon/authenticated tidak bisa akses saat RLS ON.
--- service_role tetap bisa baca/tulis (bypass RLS).
+alter table public.legal_registry enable row level security;
 
 -- =========================================
--- 2) AUDIT LOGS (append-only)
+-- B) audit_log (append-only)
 -- =========================================
-create table if not exists public.audit_logs (
+create table if not exists public.audit_log (
   id bigserial primary key,
-  actor_role text null,
+  event text not null,
+  actor_role text not null default 'SYSTEM',
   actor_email text null,
-  action text not null,
-  doc_number text null,
-  doc_type text null,
-  scope text null,
-  metadata text null,
+  target_doc text null,
+  payload_hash text null,
+  payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
-create index if not exists audit_logs_created_at_idx
-  on public.audit_logs (created_at desc);
+create index if not exists audit_log_created_at_idx
+  on public.audit_log (created_at desc);
 
-create index if not exists audit_logs_doc_number_idx
-  on public.audit_logs (doc_number);
+create index if not exists audit_log_event_idx
+  on public.audit_log (event);
 
-create index if not exists audit_logs_actor_email_idx
-  on public.audit_logs (actor_email);
+create index if not exists audit_log_actor_email_idx
+  on public.audit_log (actor_email);
 
-alter table public.audit_logs enable row level security;
+create index if not exists audit_log_target_doc_idx
+  on public.audit_log (target_doc);
 
--- =========================================
--- 3) HOLIDAYS CACHE (Google Calendar sync cache)
--- =========================================
-create table if not exists public.holidays_cache (
-  id bigserial primary key,
-  date date not null,
-  summary text null,
-  source_id text not null,
-  created_at timestamptz not null default now()
-);
+alter table public.audit_log enable row level security;
 
-create unique index if not exists holidays_cache_source_id_uq
-  on public.holidays_cache (source_id);
-
-create index if not exists holidays_cache_date_idx
-  on public.holidays_cache (date);
-
-alter table public.holidays_cache enable row level security;
+drop trigger if exists audit_log_append_only on public.audit_log;
+create trigger audit_log_append_only
+  before update or delete on public.audit_log
+  for each row
+  execute function public.audit_log_append_only();
 
 -- =========================================
--- 4) OVERTIME POLICY (kebijakan lembur per scope)
+-- C) worklogs (placeholder)
 -- =========================================
-create table if not exists public.overtime_policy (
-  id bigserial primary key,
-  scope text not null,
-  weekend_allowed boolean not null default false,
-  holiday_allowed boolean not null default false,
-  max_hours_per_day integer null,
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists overtime_policy_scope_idx
-  on public.overtime_policy (scope);
-
-alter table public.overtime_policy enable row level security;
-
--- Catatan desain:
--- Anda bisa menjadikan policy per scope itu 1 baris saja dengan UNIQUE(scope),
--- tapi kode API Anda sekarang pakai sbInsert (bukan upsert). Jadi saya tidak paksa unique.
-
--- =========================================
--- 5) OVERTIME REQUESTS (pengajuan lembur)
--- =========================================
-create table if not exists public.overtime_requests (
-  id bigserial primary key,
+create table if not exists public.worklogs (
+  id uuid primary key default gen_random_uuid(),
+  role text not null default 'MITRA',
+  mitra_email text not null,
+  doc_type text not null default 'SPL',
   doc_number text not null,
-  requested_by text not null,
   date date not null,
-  hours numeric(5,2) not null check (hours > 0),
-  reason text null,
-  status text not null default 'PENDING' check (status in ('PENDING', 'APPROVED', 'REJECTED')),
-  decided_by text null,
-  decided_at timestamptz null,
-  created_at timestamptz not null default now()
+  hours numeric(5,2) not null default 0,
+  notes text null,
+  status text not null default 'DRAFT'
+    check (status in ('DRAFT','SUBMITTED','LOCKED_BY_SYSTEM','APPROVED','REJECTED','FINAL')),
+  evidence jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint worklogs_unique_mitra_doc_date unique (mitra_email, doc_number, date)
 );
 
-create index if not exists overtime_requests_doc_number_idx
-  on public.overtime_requests (doc_number);
+create index if not exists worklogs_mitra_doc_date_idx
+  on public.worklogs (mitra_email, doc_number, date desc);
 
-create index if not exists overtime_requests_requested_by_idx
-  on public.overtime_requests (requested_by);
+alter table public.worklogs enable row level security;
 
-create index if not exists overtime_requests_status_idx
-  on public.overtime_requests (status);
-
-alter table public.overtime_requests enable row level security;
+drop trigger if exists worklogs_set_updated_at on public.worklogs;
+create trigger worklogs_set_updated_at
+  before update on public.worklogs
+  for each row
+  execute function public.set_updated_at();
 
 -- =========================================
--- 6) (OPSIONAL) DOC INSTANCES (lifecycle dokumen) - skeleton
+-- D) invoices (placeholder)
 -- =========================================
-create table if not exists public.doc_instances (
-  id bigserial primary key,
-  doc_type text not null,
+create table if not exists public.invoices (
+  id uuid primary key default gen_random_uuid(),
+  client_email text not null,
+  doc_type text not null default 'IPL',
   doc_number text not null,
-  scope text not null,
-  status text not null default 'DRAFT',
-  version integer not null default 1,
-  hash text null,
-  payload text null, -- simpan JSON string kalau perlu (agar konsisten dengan pola metadata)
+  period_start date null,
+  period_end date null,
+  amount numeric(14,2) not null default 0,
+  currency text not null default 'IDR',
+  status text not null default 'DRAFT'
+    check (status in ('DRAFT','ISSUED','PAID','CANCELLED')),
+  meta jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index if not exists doc_instances_doc_number_idx
-  on public.doc_instances (doc_number);
+create index if not exists invoices_client_doc_created_idx
+  on public.invoices (client_email, doc_number, created_at desc);
 
-create index if not exists doc_instances_scope_idx
-  on public.doc_instances (scope);
+alter table public.invoices enable row level security;
 
-alter table public.doc_instances enable row level security;
+drop trigger if exists invoices_set_updated_at on public.invoices;
+create trigger invoices_set_updated_at
+  before update on public.invoices
+  for each row
+  execute function public.set_updated_at();
 
 -- =========================================
--- End
+-- E) RLS policies: default deny (no policies for anon/authenticated)
 -- =========================================
+
+-- =========================================
+-- F) Optional view for admin overview
+-- =========================================
+create or replace view public.vw_admin_overview as
+select
+  (select count(*) from public.legal_registry) as legal_registry_total,
+  (select count(*) from public.legal_registry where is_active = true) as legal_registry_active,
+  (select count(*) from public.worklogs) as worklogs_total,
+  (select count(*) from public.invoices) as invoices_total;
