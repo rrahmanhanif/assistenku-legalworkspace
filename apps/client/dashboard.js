@@ -12,7 +12,7 @@ function formatStatus(status) {
     FINAL: "Final",
     LOCKED: "Terkunci",
     DRAFT: "Draft",
-    PAID: "Dibayar"
+    PAID: "Dibayar",
   };
   return map[status] || status || "-";
 }
@@ -28,13 +28,7 @@ function appendAuditEntry(action, hash = "-") {
   auditLog.unshift({
     action,
     hash,
-    time: new Date().toLocaleString("id-ID", {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit"
-    })
+    time: new Date().toLocaleString("id-ID"),
   });
 }
 
@@ -45,44 +39,46 @@ function renderSpls() {
   container.innerHTML = "";
 
   if (!spls.length) {
-    container.innerHTML = `<p class="muted">Belum ada SPL yang terdaftar.</p>`;
+    container.innerHTML = `<p class="muted">Belum ada SPL.</p>`;
     return;
   }
 
   spls.forEach((spl) => {
     const row = document.createElement("div");
-    row.className = "row";
+    row.className = "spl-row";
     row.innerHTML = `
       <div>
-        <div><strong>${spl.number || "-"}</strong></div>
-        <div class="muted">${spl.client || spl.owner || "-"}</div>
+        <strong>${spl.number || "-"}</strong>
+        <span class="${statusChipClass(spl.status)}">
+          ${formatStatus(spl.status)}
+        </span>
       </div>
-      <div class="${statusChipClass(spl.status)}">${formatStatus(spl.status)}</div>
+      <div class="muted">${spl.period || "-"}</div>
     `;
     container.appendChild(row);
   });
 }
 
 function renderPipeline() {
-  const container = document.getElementById("pipelineList");
+  const container = document.getElementById("pipeline");
   if (!container) return;
 
   container.innerHTML = "";
 
   if (!documentPipeline.length) {
-    container.innerHTML = `<p class="muted">Belum ada progres dokumen.</p>`;
+    container.innerHTML = `<p class="muted">Pipeline kosong.</p>`;
     return;
   }
 
   documentPipeline.forEach((item) => {
     const row = document.createElement("div");
-    row.className = "row";
+    row.className = "pipeline-row";
     row.innerHTML = `
       <div>
-        <div><strong>${item.title || item.step || "-"}</strong></div>
-        <div class="muted">${item.note || "-"}</div>
+        <strong>${item.name || "-"}</strong>
+        <span class="muted">${formatStatus(item.status)}</span>
       </div>
-      <div class="${statusChipClass(item.status)}">${formatStatus(item.status)}</div>
+      <div class="mono muted">${item.hash || "-"}</div>
     `;
     container.appendChild(row);
   });
