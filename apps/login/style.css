@@ -1,21 +1,39 @@
+:root {
+  --bg: #f6f8ff;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #5b6477;
+  --border: #e5e7eb;
+  --primary: #1e5eff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  color: #0f172a;
+  background: radial-gradient(1100px 800px at 20% 10%, #e8efff 0%, transparent 55%),
+    radial-gradient(900px 700px at 80% 20%, #eaf2ff 0%, transparent 60%),
+    var(--bg);
+  color: var(--text);
 }
 
 .login-container {
-  width: min(460px, calc(100% - 32px));
+  width: 100%;
+  max-width: 420px;
 }
 
 .login-card {
-  background: #ffffff;
+  background: var(--card);
   border-radius: 18px;
-  padding: 26px;
+  padding: 24px 22px;
   box-shadow: 0 20px 60px rgba(30, 94, 255, 0.12);
   border: 1px solid #e5e7eb;
 }
@@ -71,6 +89,74 @@ body {
   color: #fff;
   border-color: #1e5eff;
   box-shadow: 0 8px 20px rgba(30, 94, 255, 0.2);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 12px 0 6px;
+  color: #0f172a;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 12px 12px;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+input:focus,
+select:focus {
+  border-color: rgba(30, 94, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(30, 94, 255, 0.12);
+}
+
+.helper {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.actions {
+  margin-top: 14px;
+}
+
+.actions button {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #1e5eff;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  box-shadow: 0 10px 24px rgba(30, 94, 255, 0.22);
+}
+
+.actions button:hover {
+  transform: translateY(-1px);
+}
+
+.actions button:active {
+  transform: translateY(0px);
+  box-shadow: 0 6px 16px rgba(30, 94, 255, 0.18);
+}
+
+.note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .notice {
