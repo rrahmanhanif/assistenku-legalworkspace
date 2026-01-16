@@ -1,12 +1,13 @@
 import {
   renderBlankTemplateList,
-  requirePortalAccess,
   downloadTemplateFile
 } from "../shared/access.js";
 import { signOutFirebase } from "../shared/firebase.js";
-import { apiFetch, apiHealth, apiWhoAmI } from "/assets/apiClient.js";
+import { apiFetch } from "/shared/apiClient.js";
+import { requireRole } from "/shared/guards.js";
+import { clearPortalSession, loadPortalSession } from "/shared/session.js";
 
-requirePortalAccess("ADMIN", "IPL");
+requireRole("ADMIN");
 
 const docLegend = document.getElementById("docLegend");
 const docTableBody = document.querySelector("#docTable tbody");
@@ -14,6 +15,10 @@ const invoiceTableBody = document.querySelector("#invoiceTable tbody");
 const invoiceCount = document.getElementById("invoiceCount");
 const evidenceList = document.getElementById("evidenceList");
 const statusMessage = document.getElementById("statusMessage");
+const overviewCounts = document.getElementById("overviewCounts");
+
+const registrationForm = document.getElementById("registrationForm");
+const registrationResult = document.getElementById("registrationResult");
 
 let documents = [];
 let invoices = [];
@@ -46,7 +51,7 @@ function renderDocuments() {
     row.innerHTML = `
       <td><strong>${doc.type || "-"}</strong></td>
       <td>${doc.number || "-"}</td>
-      <td>${doc.owner || "-"}</td>
+      <td>${doc.owner || doc.email || "-"}</td>
       <td><span class="status">${doc.status || "-"}</span></td>
       <td class="mono">${doc.hash || "-"}</td>
       <td>
@@ -118,12 +123,22 @@ function renderEvidences() {
     const li = document.createElement("li");
     li.className = "list-item";
     li.innerHTML = `
-      <div class="list-title">${item.date || "-"} — ${item.mitra || "-"}</div>
+      <div class="list-title">${item.date || "-"} — ${item.mitra || item.partner || "-"}</div>
       <div class="list-subtitle">${item.client || "-"} • ${item.status || "-"}</div>
       <div class="list-note">${item.note || "-"}</div>
     `;
     evidenceList.appendChild(li);
   });
+}
+
+function renderOverviewCounts(overview) {
+  if (!overviewCounts) return;
+
+  const docCount = overview?.documents?.length ?? overview?.documentsCount ?? 0;
+  const invoiceCountValue = overview?.invoices?.length ?? overview?.invoicesCount ?? 0;
+  const evidenceCountValue = overview?.evidences?.length ?? overview?.evidencesCount ?? 0;
+
+  overviewCounts.textContent = `Dokumen: ${docCount} • Invoice: ${invoiceCountValue} • Evidence: ${evidenceCountValue}`;
 }
 
 function attachEvents() {
@@ -157,9 +172,63 @@ function attachEvents() {
     loadOverview();
   });
 
+  document.getElementById("btnOverview")?.addEventListener("click", () => {
+    loadOverview();
+  });
+
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    clearPortalSession();
     await signOutFirebase();
-    window.location.href = "/";
+    window.location.href = "/apps/login/";
+  });
+
+  registrationForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const session = loadPortalSession();
+    if (!session?.adminCode) {
+      if (registrationResult) {
+        registrationResult.textContent = "Kode admin tidak ditemukan. Silakan login ulang sebagai admin.";
+      }
+      return;
+    }
+
+    const payload = {
+      role: document.getElementById("regRole")?.value,
+      email: document.getElementById("regEmail")?.value.trim(),
+      accountType: document.getElementById("regAccountType")?.value,
+      docType: document.getElementById("regDocType")?.value,
+      docNumber: document.getElementById("regDocNumber")?.value.trim(),
+      template: document.getElementById("regTemplate")?.value.trim() || null,
+      isActive: document.getElementById("regIsActive")?.checked ?? true
+    };
+
+    if (!payload.email || !payload.docNumber) {
+      if (registrationResult) {
+        registrationResult.textContent = "Email dan nomor dokumen wajib diisi.";
+      }
+      return;
+    }
+
+    try {
+      const result = await apiFetch("/api/legal/docs/register", {
+        method: "POST",
+        body: payload
+      });
+
+      if (registrationResult) {
+        registrationResult.textContent = `Registrasi berhasil untuk ${payload.role} (${payload.email}) dengan dokumen ${payload.docType} ${payload.docNumber}.`;
+      }
+
+      if (result?.id && registrationResult) {
+        registrationResult.textContent += ` ID: ${result.id}`;
+      }
+    } catch (err) {
+      console.error(err);
+      if (registrationResult) {
+        registrationResult.textContent = err?.message || "Gagal menyimpan registrasi.";
+      }
+    }
   });
 }
 
@@ -171,19 +240,18 @@ async function loadOverview() {
   setStatus("Memuat data terbaru dari api.assistenku.com ...");
 
   try {
-    await apiHealth();
-    const who = await apiWhoAmI();
-    setStatus(`Terkoneksi sebagai ${who?.email || "-"}`);
+    setStatus("Terkoneksi sebagai admin");
   } catch (err) {
     console.error(err);
     setStatus(`Peringatan: ${err?.message || "Gagal memanggil API"}`);
   }
 
   try {
-    const overview = await apiFetch("/api/admin/ledger/overview", { admin: true });
+    const overview = await apiFetch("/api/admin/ledger/overview", { method: "GET" });
     documents = overview?.documents || [];
     invoices = overview?.invoices || [];
     evidences = overview?.evidences || [];
+    renderOverviewCounts(overview);
     setStatus("Data berhasil dimuat dari API");
   } catch (err) {
     console.error(err);
@@ -191,6 +259,7 @@ async function loadOverview() {
     documents = [];
     invoices = [];
     evidences = [];
+    renderOverviewCounts({});
   }
 
   renderDocuments();
