@@ -229,7 +229,7 @@ async function uploadEvidence() {
       });
     }
 
-    evidenceFileInput.value = "";
+    if (evidenceFileInput) evidenceFileInput.value = "";
     await loadWorklogs();
   } catch (err) {
     console.error(err);
@@ -300,9 +300,10 @@ async function viewEvidence(objectPath) {
 
   try {
     setLoading(true, "Menyiapkan bukti...");
-    const data = await apiFetch(`/api/evidence/view-url?objectPath=${encodeURIComponent(objectPath)}`, {
-      method: "GET"
-    });
+    const data = await apiFetch(
+      `/api/evidence/view-url?objectPath=${encodeURIComponent(objectPath)}`,
+      { method: "GET" }
+    );
     const signedUrl = data?.signedUrl || data?.url;
     if (!signedUrl) throw new Error("Signed URL tidak tersedia.");
     window.open(signedUrl, "_blank");
