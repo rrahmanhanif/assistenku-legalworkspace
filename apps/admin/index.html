@@ -7,8 +7,7 @@
 
   <link rel="stylesheet" href="/assets/css/app.css" />
 
-  <script src="/assets/config.js"></script>
-  <script type="module" src="/assets/apiClient.js"></script>
+  <script src="/config.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -17,7 +16,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <script src="/assets/firebase-config.js"></script>
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
@@ -40,12 +38,14 @@
     </div>
     <div class="header-actions">
       <button id="btnRefresh" class="secondary">Segarkan Data</button>
+      <button id="btnOverview" class="secondary">Cek Overview</button>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
 
   <main class="container">
     <p id="statusMessage" class="muted">Menunggu koneksi API...</p>
+    <p id="overviewCounts" class="muted"></p>
 
     <section class="grid three">
       <article class="card highlight">
@@ -71,53 +71,51 @@
       <div class="card-header">
         <div>
           <h2>Dokumen Terdaftar</h2>
-          <p class="muted" id="docLegend"></p>
+          <p class="muted">Daftar dokumen yang sudah diregistrasi dan statusnya.</p>
         </div>
       </div>
 
-      <div class="table-wrap">
-        <table id="docTable" class="table">
-          <thead>
-            <tr>
-              <th>Tipe</th>
-              <th>Nomor</th>
-              <th>Pemilik</th>
-              <th>Status</th>
-              <th>Hash</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <table id="docTable" class="table">
+        <thead>
+          <tr>
+            <th>Tipe</th>
+            <th>Nomor</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Hash</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div id="docLegend" class="legend"></div>
     </section>
 
     <section class="card">
       <div class="card-header">
         <div>
           <h2>Invoice</h2>
-          <p class="muted">Ringkasan penagihan & pembayaran.</p>
+          <p class="muted">Invoice yang dapat diunduh untuk penagihan.</p>
         </div>
         <div class="card-actions">
           <button id="btnAddInvoice" class="secondary">Tambah Invoice</button>
         </div>
       </div>
 
-      <div class="table-wrap">
-        <table id="invoiceTable" class="table">
-          <thead>
-            <tr>
-              <th>Nomor</th>
-              <th>Pemilik</th>
-              <th>Periode</th>
-              <th>Status</th>
-              <th>Nominal</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <table id="invoiceTable" class="table">
+        <thead>
+          <tr>
+            <th>Nomor</th>
+            <th>Owner</th>
+            <th>Periode</th>
+            <th>Status</th>
+            <th>Nominal</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
 
     <section class="card">
@@ -143,6 +141,55 @@
       </div>
 
       <div id="templateDownloads"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Registrasi Akun</h2>
+          <p class="muted">Daftarkan Client/Mitra agar bisa menerima link login berbasis dokumen.</p>
+        </div>
+      </div>
+
+      <form id="registrationForm" class="form-grid">
+        <label for="regRole">Role Target</label>
+        <select id="regRole" required>
+          <option value="CLIENT">Client</option>
+          <option value="MITRA">Mitra</option>
+        </select>
+
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" placeholder="email@perusahaan.com" required />
+
+        <label for="regAccountType">Jenis Akun</label>
+        <select id="regAccountType" required>
+          <option value="PERSONAL">Personal</option>
+          <option value="PT">PT</option>
+        </select>
+
+        <label for="regDocType">Jenis Dokumen</label>
+        <select id="regDocType" required>
+          <option value="IPL">IPL</option>
+          <option value="SPL">SPL</option>
+          <option value="ADDENDUM">Addendum</option>
+          <option value="QUOTATION">Quotation</option>
+        </select>
+
+        <label for="regDocNumber">Nomor Dokumen</label>
+        <input id="regDocNumber" type="text" placeholder="Masukkan nomor dokumen" required />
+
+        <label for="regTemplate">Template (opsional)</label>
+        <input id="regTemplate" type="text" placeholder="Contoh: 01-ipl.html" />
+
+        <label class="checkbox">
+          <input id="regIsActive" type="checkbox" checked />
+          <span>Aktif</span>
+        </label>
+
+        <button type="submit" class="primary">Simpan Registrasi</button>
+      </form>
+
+      <div id="registrationResult" class="muted" style="margin-top: 12px;"></div>
     </section>
 
     <div class="actions">
