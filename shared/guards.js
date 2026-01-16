@@ -7,11 +7,13 @@ function redirectToLogin(role) {
 
 export function requireToken() {
   const session = loadPortalSession();
+
   if (!session?.idToken) {
     clearPortalSession();
     redirectToLogin();
     return null;
   }
+
   return session;
 }
 
