@@ -1,20 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Admin | LegalWorkspace</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal Admin — Assistenku</title>
 
-  <link rel="stylesheet" href="/assets/css/app.css" />
-
-  <script src="/config.js"></script>
-
-  <!-- PWA -->
+  <meta name="description" content="Portal Admin Assistenku — Monitor Client & Mitra" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#0a58ff" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+
+  <!-- (opsional) stylesheet jika ada -->
+  <link rel="stylesheet" href="/assets/styles.css" />
 
   <script type="module">
     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -31,15 +30,18 @@
   <header>
     <div>
       <p class="eyebrow">Portal Admin</p>
-      <h1>Monitor Client & Mitra</h1>
+      <h1>Monitor Client &amp; Mitra</h1>
       <p class="muted">
         Akses berbasis IPL digital. Admin dapat memantau dokumen, kinerja mitra, serta membuat invoice.
       </p>
+      <p class="muted" id="whoamiInfo">Memuat identitas...</p>
     </div>
+
     <div class="header-actions">
-      <button id="btnRefresh" class="secondary">Segarkan Data</button>
-      <button id="btnOverview" class="secondary">Cek Overview</button>
-      <button id="logoutBtn">Logout</button>
+      <button id="btnInstall" class="secondary" type="button">Install</button>
+      <button id="btnRefresh" class="secondary" type="button">Segarkan Data</button>
+      <button id="btnOverview" class="secondary" type="button">Cek Overview</button>
+      <button id="logoutBtn" type="button">Logout</button>
     </div>
   </header>
 
@@ -47,156 +49,143 @@
     <p id="statusMessage" class="muted">Menunggu koneksi API...</p>
     <p id="overviewCounts" class="muted"></p>
 
-    <section class="grid three">
+    <!-- Legend status dokumen -->
+    <div id="docLegend" style="margin: 14px 0;"></div>
+
+    <!-- Ringkas highlight -->
+    <section class="grid three" style="margin: 16px 0;">
       <article class="card highlight">
         <p class="eyebrow">Kontrol Akses</p>
-        <h2>Client & Mitra Terproteksi</h2>
-        <p class="muted">Setiap portal wajib login menggunakan IPL/SPL digital resmi sebelum masuk.</p>
+        <h2>Client &amp; Mitra Terproteksi</h2>
+        <p class="muted">
+          Setiap portal wajib login menggunakan IPL/SPL digital resmi sebelum masuk.
+        </p>
       </article>
 
       <article class="card">
         <p class="eyebrow">Invoice</p>
         <h2 id="invoiceCount">-</h2>
-        <p class="muted">Pembayaran ke mitra & penagihan ke client hanya aktif jika bukti kinerja ada.</p>
+        <p class="muted">
+          Pembayaran ke mitra &amp; penagihan ke client hanya aktif jika bukti kinerja ada.
+        </p>
       </article>
 
       <article class="card">
-        <p class="eyebrow">Audit</p>
-        <h2>Append-only</h2>
-        <p class="muted">Seluruh aksi penting dicatat: registry, login, submit, approve, tanda tangan, export.</p>
+        <p class="eyebrow">Template</p>
+        <h2>Download</h2>
+        <div id="templateDownloads" class="muted">Memuat daftar template...</div>
       </article>
     </section>
 
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Dokumen Terdaftar</h2>
-          <p class="muted">Dokumen IPL/SPL yang tersimpan di registry dan statusnya.</p>
-        </div>
+    <!-- Dokumen -->
+    <section class="card" style="margin: 16px 0; padding: 14px;">
+      <h2>Daftar Dokumen</h2>
+      <div style="overflow:auto;">
+        <table id="docTable" width="100%">
+          <thead>
+            <tr>
+              <th>Jenis</th>
+              <th>Nomor</th>
+              <th>Status</th>
+              <th>Owner</th>
+              <th>Update</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="6" class="muted">Belum ada dokumen dari API.</td></tr>
+          </tbody>
+        </table>
       </div>
-
-      <table id="docTable" class="table">
-        <thead>
-          <tr>
-            <th>Tipe</th>
-            <th>Nomor</th>
-            <th>Pemilik</th>
-            <th>Status</th>
-            <th>Hash</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <div class="legend" id="docLegend"></div>
     </section>
 
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Invoice</h2>
-          <p class="muted">Invoice yang tersimpan di API admin.</p>
-        </div>
-        <div class="card-actions">
-          <button id="btnAddInvoice" class="secondary">Tambah Invoice</button>
-        </div>
+    <!-- Invoice -->
+    <section class="card" style="margin: 16px 0; padding: 14px;">
+      <h2>Invoice</h2>
+      <div style="overflow:auto;">
+        <table id="invoiceTable" width="100%">
+          <thead>
+            <tr>
+              <th>Nomor</th>
+              <th>Jumlah</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-
-      <table id="invoiceTable" class="table">
-        <thead>
-          <tr>
-            <th>Nomor</th>
-            <th>Pemilik</th>
-            <th>Periode</th>
-            <th>Status</th>
-            <th>Nominal</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
     </section>
 
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Evidence Kinerja</h2>
-          <p class="muted">Evidence yang masuk dari mitra dan statusnya.</p>
-        </div>
-        <div class="card-actions">
-          <button id="btnUploadEvidence" class="secondary">Unggah Evidence</button>
-        </div>
-      </div>
-
-      <ul id="evidenceList" class="list"></ul>
+    <!-- Evidence -->
+    <section class="card" style="margin: 16px 0; padding: 14px;">
+      <h2>Evidence / Bukti</h2>
+      <ul id="evidenceList"></ul>
     </section>
 
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Unduhan Template</h2>
-          <p class="muted">Template kosong untuk uji klik (jika API belum aktif).</p>
+    <!-- Registrasi Dokumen -->
+    <section class="card" style="margin: 16px 0; padding: 14px;">
+      <h2>Registrasi Dokumen (Admin)</h2>
+      <p class="muted">Daftarkan dokumen untuk Client / Mitra agar dapat login berbasis dokumen.</p>
+
+      <form id="registrationForm">
+        <div class="grid two" style="gap: 10px;">
+          <label>
+            Role
+            <select id="regRole">
+              <option value="CLIENT">CLIENT</option>
+              <option value="MITRA">MITRA</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </label>
+
+          <label>
+            Account Type
+            <select id="regAccountType">
+              <option value="LEGAL">LEGAL</option>
+              <option value="OPERATION">OPERATION</option>
+            </select>
+          </label>
+
+          <label>
+            Email
+            <input id="regEmail" type="email" placeholder="email@domain.com" />
+          </label>
+
+          <label>
+            Doc Type
+            <select id="regDocType">
+              <option value="IPL">IPL</option>
+              <option value="SPL">SPL</option>
+              <option value="QUOTATION">QUOTATION</option>
+              <option value="ADDENDUM">ADDENDUM</option>
+            </select>
+          </label>
+
+          <label>
+            Doc Number
+            <input id="regDocNumber" type="text" placeholder="Contoh: SPL-000123" />
+          </label>
+
+          <label>
+            Template (opsional)
+            <input id="regTemplate" type="text" placeholder="nama-template.pdf" />
+          </label>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-top: 22px;">
+            <input id="regIsActive" type="checkbox" checked />
+            Aktif
+          </label>
         </div>
-      </div>
 
-      <div id="templateDownloads"></div>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Registrasi Akun</h2>
-          <p class="muted">Daftarkan Client/Mitra agar bisa menerima link login berbasis dokumen.</p>
+        <div style="margin-top: 12px; display:flex; gap:10px; align-items:center;">
+          <button type="submit">Simpan Registrasi</button>
+          <p id="registrationResult" class="muted" style="margin:0;"></p>
         </div>
-      </div>
-
-      <form id="registrationForm" class="form-grid">
-        <label for="regRole">Role Target</label>
-        <select id="regRole" required>
-          <option value="CLIENT">Client</option>
-          <option value="MITRA">Mitra</option>
-        </select>
-
-        <label for="regEmail">Email</label>
-        <input id="regEmail" type="email" placeholder="email@perusahaan.com" required />
-
-        <label for="regAccountType">Jenis Akun</label>
-        <select id="regAccountType" required>
-          <option value="PERSONAL">Personal</option>
-          <option value="PT">PT</option>
-        </select>
-
-        <label for="regDocType">Jenis Dokumen</label>
-        <select id="regDocType" required>
-          <option value="IPL">IPL</option>
-          <option value="SPL">SPL</option>
-          <option value="ADDENDUM">Addendum</option>
-          <option value="QUOTATION">Quotation</option>
-        </select>
-
-        <label for="regDocNumber">Nomor Dokumen</label>
-        <input id="regDocNumber" type="text" placeholder="Masukkan nomor dokumen" required />
-
-        <label for="regTemplate">Template (opsional)</label>
-        <input id="regTemplate" type="text" placeholder="Contoh: 01-ipl.html" />
-
-        <label class="checkbox">
-          <input id="regIsActive" type="checkbox" checked />
-          <span>Aktif</span>
-        </label>
-
-        <button type="submit" class="primary">Simpan Registrasi</button>
       </form>
-
-      <div id="registrationResult" class="muted" style="margin-top: 12px;"></div>
     </section>
-
-    <div class="actions">
-      <button id="btnInstall" class="primary">Install App</button>
-    </div>
   </main>
 
+  <!-- Admin logic -->
   <script type="module" src="/apps/admin/admin.js"></script>
 </body>
 </html>
