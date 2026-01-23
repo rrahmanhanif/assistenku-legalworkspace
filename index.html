@@ -327,11 +327,17 @@
   </main>
 
   <script>
-    try {
-      const base = window.ASSISTENKU_API_BASE || "https://api.assistenku.com";
-      const el = document.getElementById("apiBaseText");
-      if (el) el.textContent = base;
-    } catch {}
-  </script>
+  try {
+    const base =
+      window.__API_BASE_URL__ ||
+      window.__API_BASE__ ||
+      window.ASSISTENKU_API_BASE ||
+      "https://api.assistenku.com";
+
+    const el = document.getElementById("apiBaseText");
+    if (el) el.textContent = base;
+  } catch {}
+</script>
+
 </body>
 </html>
