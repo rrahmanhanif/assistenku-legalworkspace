@@ -1,15 +1,15 @@
-import { apiFetch } from "/assets/apiClient.js";
+import { requestWithSession } from "/shared/http/httpClient.js";
 
 export async function approve(id) {
   if (!confirm("Setujui & kunci SPL?")) return;
 
   try {
-    await apiFetch("/api/client/worklogs/approve", {
+    await requestWithSession("/api/client/worklogs/approve", {
       method: "POST",
       body: { id }
     });
 
-    await apiFetch("/api/legal/generate-spl-pdf", {
+    await requestWithSession("/api/legal/generate-spl-pdf", {
       method: "POST",
       body: { log_id: id }
     });
