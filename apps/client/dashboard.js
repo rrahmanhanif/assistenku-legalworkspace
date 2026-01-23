@@ -1,6 +1,7 @@
 import { signOutFirebase } from "../shared/firebase.js";
-import { apiFetch } from "/shared/apiClient.js";
-import { clearPortalSession } from "/shared/session.js";
+import { endpoints } from "/shared/http/endpoints.js";
+import { request, requestWithSession } from "/shared/http/httpClient.js";
+import { clearPortalSession, loadPortalSession } from "/shared/session.js";
 
 let spls = [];
 let documentPipeline = [];
@@ -39,46 +40,44 @@ function renderSpls() {
   container.innerHTML = "";
 
   if (!spls.length) {
-    container.innerHTML = `<p class="muted">Belum ada SPL.</p>`;
+    container.innerHTML = `<div class="muted">Belum ada SPL.</div>`;
     return;
   }
 
   spls.forEach((spl) => {
     const row = document.createElement("div");
-    row.className = "spl-row";
+    row.className = "list-row";
     row.innerHTML = `
-      <div>
-        <strong>${spl.number || "-"}</strong>
-        <span class="${statusChipClass(spl.status)}">
-          ${formatStatus(spl.status)}
-        </span>
+      <div class="list-main">
+        <div><strong>${spl.title || spl.name || spl.docNumber || "SPL"}</strong></div>
+        <div class="muted">${spl.docType || "SPL"} • ${spl.docNumber || "-"} • ${spl.createdAt || "-"}</div>
       </div>
-      <div class="muted">${spl.period || "-"}</div>
+      <div class="${statusChipClass(spl.status)}">${formatStatus(spl.status)}</div>
     `;
     container.appendChild(row);
   });
 }
 
 function renderPipeline() {
-  const container = document.getElementById("pipeline");
+  const container = document.getElementById("pipelineList");
   if (!container) return;
 
   container.innerHTML = "";
 
   if (!documentPipeline.length) {
-    container.innerHTML = `<p class="muted">Pipeline kosong.</p>`;
+    container.innerHTML = `<div class="muted">Belum ada pipeline.</div>`;
     return;
   }
 
   documentPipeline.forEach((item) => {
     const row = document.createElement("div");
-    row.className = "pipeline-row";
+    row.className = "list-row";
     row.innerHTML = `
-      <div>
-        <strong>${item.name || "-"}</strong>
-        <span class="muted">${formatStatus(item.status)}</span>
+      <div class="list-main">
+        <div><strong>${item.title || item.step || "Proses"}</strong></div>
+        <div class="muted">${item.description || item.detail || "-"}</div>
       </div>
-      <div class="mono muted">${item.hash || "-"}</div>
+      <div class="${statusChipClass(item.status)}">${formatStatus(item.status)}</div>
     `;
     container.appendChild(row);
   });
@@ -91,7 +90,7 @@ function renderAuditLog() {
   container.innerHTML = "";
 
   if (!auditLog.length) {
-    container.innerHTML = `<p class="muted">Belum ada audit trail.</p>`;
+    container.innerHTML = `<div class="muted">Belum ada audit.</div>`;
     return;
   }
 
@@ -124,6 +123,31 @@ function bindActions() {
   });
 }
 
+async function loadWhoAmI() {
+  const target = document.getElementById("whoamiInfo");
+  if (!target) return;
+
+  const session = loadPortalSession();
+  if (!session?.idToken) {
+    target.textContent = "Belum login.";
+    return;
+  }
+
+  target.textContent = "Memuat identitas...";
+
+  try {
+    const data = await request(endpoints.auth.whoami, { token: session.idToken });
+    const profile = data?.data || data || {};
+    const role = profile.role || session.role || "-";
+    const email = profile.email || session.email || "-";
+    const id = profile.id || profile.userId || profile.uid || "-";
+    target.textContent = `${role} • ${email} • ${id}`;
+  } catch (err) {
+    console.error(err);
+    target.textContent = "Gagal memuat identitas.";
+  }
+}
+
 async function loadData() {
   const statusEl = document.getElementById("splStatus");
   const privyStatus = document.getElementById("privyStatus");
@@ -134,7 +158,7 @@ async function loadData() {
   if (evidenceStatus) evidenceStatus.textContent = "Memuat...";
 
   try {
-    const data = await apiFetch("/api/client/invoices/list", { method: "GET" });
+    const data = await requestWithSession("/api/client/invoices/list", { method: "GET" });
 
     spls = data?.spls || [];
     documentPipeline = data?.pipeline || [];
@@ -157,4 +181,5 @@ async function loadData() {
 }
 
 bindActions();
+loadWhoAmI();
 loadData();
