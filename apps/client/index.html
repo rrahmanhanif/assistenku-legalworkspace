@@ -1,20 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Client | Assistenku Legal</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal Client — Assistenku</title>
 
-  <link rel="stylesheet" href="/assets/css/app.css" />
-
-  <script src="/config.js"></script>
-
-  <!-- PWA -->
+  <meta name="description" content="Portal Client Assistenku — Dashboard Legal (read-only)" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#0a58ff" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+
+  <!-- (opsional) stylesheet jika ada -->
+  <link rel="stylesheet" href="/assets/styles.css" />
 
   <!-- Firebase Web SDK (CDN, ESM) -->
   <script type="module">
@@ -41,11 +40,14 @@
       <p class="muted">
         Portal read-only untuk memantau SPL, status bukti kerja, invoice, serta proses tanda tangan.
       </p>
+      <p class="muted" id="whoamiInfo">Memuat identitas...</p>
     </div>
+
     <div class="header-actions">
-      <button id="btnRefresh" class="secondary">Segarkan Data</button>
-      <button id="btnLoadInvoices" class="secondary">Load Invoices</button>
-      <button id="logoutBtn">Logout</button>
+      <button id="btnInstall" class="secondary" type="button">Install</button>
+      <button id="btnRefresh" class="secondary" type="button">Segarkan Data</button>
+      <button id="btnLoadInvoices" class="secondary" type="button">Load Invoices</button>
+      <button id="logoutBtn" type="button">Logout</button>
     </div>
   </header>
 
@@ -66,12 +68,29 @@
       <article class="card">
         <p class="eyebrow">Evidence</p>
         <h2 id="evidenceStatus">-</h2>
-        <p class="muted">Status evidence kinerja mitra yang diterima.</p>
+        <p class="muted">Kelengkapan bukti kerja dan audit trail.</p>
       </article>
     </section>
 
-    <!-- Konten lanjutan (SPL list, pipeline, audit log, tombol install, dll) tetap mengikuti file Anda yang asli. -->
-    <script type="module" src="/apps/client/dashboard.js"></script>
+    <section class="card" style="margin-top: 16px; padding: 14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h2 style="margin:0;">Daftar SPL</h2>
+        <button id="btnSendToPrivy" class="secondary" type="button">Kirim ke PrivyID</button>
+      </div>
+      <div id="splList" style="margin-top: 10px;"></div>
+    </section>
+
+    <section class="card" style="margin-top: 16px; padding: 14px;">
+      <h2 style="margin:0;">Pipeline Dokumen</h2>
+      <div id="pipelineList" style="margin-top: 10px;"></div>
+    </section>
+
+    <section class="card" style="margin-top: 16px; padding: 14px;">
+      <h2 style="margin:0;">Audit Log</h2>
+      <div id="auditLog" style="margin-top: 10px;"></div>
+    </section>
   </main>
+
+  <script type="module" src="/apps/client/dashboard.js"></script>
 </body>
 </html>
