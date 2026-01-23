@@ -1,142 +1,60 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <title>Dashboard Mitra | Assistenku Legal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <link rel="stylesheet" href="/assets/css/app.css" />
-
-  <script src="/config.js"></script>
-
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="#0a58ff" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-
-  <script type="module">
-    import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-  </script>
-
-  <!-- Guard Role -->
-  <script type="module">
-    import { requireRole } from "/shared/guards.js";
-    requireRole("MITRA");
-  </script>
-
-  <script type="module">
-    import { setupPwaInstall } from "/assets/pwa.js";
-    setupPwaInstall({ buttonId: "btnInstall", autoPromptOnFirstClick: true });
-  </script>
-</head>
-
-<body>
-  <header>
-    <div>
-      <p class="eyebrow">Portal Mitra</p>
-      <h1>Dashboard Kinerja</h1>
-      <p class="muted">
-        Mitra mengisi laporan harian, unggah bukti, lalu submit. Setelah submit status akan LOCKED.
-      </p>
-    </div>
-    <div class="header-actions">
-      <button id="btnRefresh" class="secondary">Segarkan Data</button>
-      <button id="btnLoadWorklogs" class="secondary">Load Worklogs</button>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="grid three">
-      <article class="card highlight">
-        <p class="eyebrow">Status</p>
-        <h2 id="workStatus">-</h2>
-        <p class="muted">Status laporan kerja terakhir.</p>
-      </article>
-
-      <article class="card">
-        <p class="eyebrow">Evidence</p>
-        <h2 id="evidenceCount">-</h2>
-        <p class="muted">Jumlah bukti yang sudah diunggah.</p>
-      </article>
-
-      <article class="card">
-        <p class="eyebrow">Audit</p>
-        <h2>Append-only</h2>
-        <p class="muted">Semua aksi tercatat: login, submit, upload bukti, lock, export.</p>
-      </article>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Laporan Harian</h2>
-          <p class="muted">Simpan draft dan unggah bukti kerja harian via signed URL.</p>
-        </div>
-        <div class="card-actions">
-          <button id="btnSubmit" class="primary">Submit</button>
-          <button id="btnLock" class="secondary">Lock</button>
-        </div>
-      </div>
-
-      <div id="errorBox" class="muted" style="margin-bottom: 12px;"></div>
-      <div id="loadingIndicator" class="muted" style="display:none; margin-bottom: 12px;">Memproses...</div>
-
-      <form id="worklogForm" class="form-grid">
-        <label for="docNumberInput">Nomor Dokumen</label>
-        <input id="docNumberInput" type="text" placeholder="SPL-2024-001" required />
-
-        <label for="worklogDate">Tanggal</label>
-        <input id="worklogDate" type="date" required />
-
-        <label for="worklogHours">Jam</label>
-        <input id="worklogHours" type="number" min="0" step="0.25" placeholder="8" required />
-
-        <label for="worklogNotes">Catatan</label>
-        <input id="worklogNotes" type="text" placeholder="Ringkasan pekerjaan" />
-
-        <button id="btnSaveDraft" type="submit" class="primary">Simpan DRAFT</button>
-      </form>
-
-      <div class="upload-wrap">
-        <label for="evidenceFile" class="muted">Unggah bukti (foto/dokumen):</label>
-        <input id="evidenceFile" type="file" multiple />
-        <button id="btnUploadEvidence" class="secondary">Upload Bukti</button>
-      </div>
-
-      <div class="muted" id="submitHint" style="margin-top: 10px;">
-        Setelah submit, data dapat dikunci oleh sistem dan tidak bisa diubah.
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Daftar Worklogs</h2>
-          <p class="muted">Ringkasan worklog beserta bukti yang sudah diunggah.</p>
-        </div>
-      </div>
-      <div id="worklogsList"></div>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Audit Trail</h2>
-          <p class="muted">Riwayat aktivitas penting mitra.</p>
-        </div>
-      </div>
-      <div id="auditLog"></div>
-    </section>
-
-    <div class="actions">
-      <button id="btnInstall" class="primary">Install App</button>
-    </div>
-  </main>
-
-  <script type="module" src="/apps/mitra/mitra.js"></script>
-</body>
-</html>
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/apps/mitra/index.html b/apps/mitra/index.html
+index 39baf899f61fde7ae62855e85648e9707099dc74..cb9522a646b35d44cab95ac21257db1a4272c7b7 100644
+--- a/apps/mitra/index.html
++++ b/apps/mitra/index.html
+@@ -19,50 +19,51 @@
+   <script type="module">
+     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+     import "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+   </script>
+ 
+   <!-- Guard Role -->
+   <script type="module">
+     import { requireRole } from "/shared/guards.js";
+     requireRole("MITRA");
+   </script>
+ 
+   <script type="module">
+     import { setupPwaInstall } from "/assets/pwa.js";
+     setupPwaInstall({ buttonId: "btnInstall", autoPromptOnFirstClick: true });
+   </script>
+ </head>
+ 
+ <body>
+   <header>
+     <div>
+       <p class="eyebrow">Portal Mitra</p>
+       <h1>Dashboard Kinerja</h1>
+       <p class="muted">
+         Mitra mengisi laporan harian, unggah bukti, lalu submit. Setelah submit status akan LOCKED.
+       </p>
++      <p class="muted" id="whoamiInfo">Memuat identitas...</p>
+     </div>
+     <div class="header-actions">
+       <button id="btnRefresh" class="secondary">Segarkan Data</button>
+       <button id="btnLoadWorklogs" class="secondary">Load Worklogs</button>
+       <button id="logoutBtn">Logout</button>
+     </div>
+   </header>
+ 
+   <main class="container">
+     <section class="grid three">
+       <article class="card highlight">
+         <p class="eyebrow">Status</p>
+         <h2 id="workStatus">-</h2>
+         <p class="muted">Status laporan kerja terakhir.</p>
+       </article>
+ 
+       <article class="card">
+         <p class="eyebrow">Evidence</p>
+         <h2 id="evidenceCount">-</h2>
+         <p class="muted">Jumlah bukti yang sudah diunggah.</p>
+       </article>
+ 
+       <article class="card">
+         <p class="eyebrow">Audit</p>
+         <h2>Append-only</h2>
+ 
+EOF
+)
