@@ -3,7 +3,8 @@ import {
   hasEmailOtpLink,
   sendEmailLink
 } from "../shared/firebase.js";
-import { apiFetch } from "/shared/apiClient.js";
+import { endpoints } from "/shared/http/endpoints.js";
+import { request } from "/shared/http/httpClient.js";
 import { savePortalSession } from "/shared/session.js";
 
 const emailInput = document.getElementById("email");
@@ -29,137 +30,106 @@ const ROLE_OPTIONS = ["ADMIN", "CLIENT", "MITRA"];
 
 function normalizeAccountType(value) {
   const upper = String(value || "").toUpperCase();
-  return upper === "PT" ? "PT" : "PERSONAL";
+  if (upper === "PERSONAL" || upper === "BUSINESS" || upper === "LEGAL") return upper;
+  return "PERSONAL";
 }
 
 function getDefaultDocType(role, accountType) {
-  if (role === "CLIENT" && accountType === "PERSONAL") return "IPL";
-  if (role === "CLIENT" && accountType === "PT") return "ADDENDUM";
-  if (role === "MITRA" && accountType === "PERSONAL") return "SPL";
-  if (role === "MITRA" && accountType === "PT") return "QUOTATION";
-  return "IPL";
+  if (role === "MITRA") return "SPL";
+  if (role === "CLIENT") return accountType === "LEGAL" ? "IPL" : "IPL";
+  return "";
 }
 
-function updateDocUi() {
-  if (selectedRole === "ADMIN") return;
+function setSelectedRole(role) {
+  selectedRole = ROLE_OPTIONS.includes(role) ? role : "ADMIN";
 
-  const docType = docTypeSelect?.value || getDefaultDocType(selectedRole, selectedAccountType);
-  if (docNumberLabel) docNumberLabel.textContent = `Nomor ${docType}`;
+  // Toggle field admin vs doc
+  if (selectedRole === "ADMIN") {
+    if (adminCodeField) adminCodeField.style.display = "";
+    if (docFields) docFields.style.display = "none";
+  } else {
+    if (adminCodeField) adminCodeField.style.display = "none";
+    if (docFields) docFields.style.display = "";
+  }
 
-  const placeholderMap = {
-    IPL: "Contoh: IPL-2024-001",
-    SPL: "Contoh: SPL-2024-001",
-    ADDENDUM: "Contoh: ADD-2024-001",
-    QUOTATION: "Contoh: QUO-2024-001"
-  };
+  // Update doc label/hint
+  const accountType = normalizeAccountType(accountTypeSelect?.value || selectedAccountType);
+  const defaultDocType = getDefaultDocType(selectedRole, accountType);
 
-  if (docNumberInput) {
-    docNumberInput.placeholder = placeholderMap[docType] || "Masukkan nomor dokumen";
+  if (!docTypeTouched && docTypeSelect && defaultDocType) {
+    docTypeSelect.value = defaultDocType;
+  }
+
+  if (docNumberLabel) {
+    docNumberLabel.textContent =
+      selectedRole === "MITRA" ? "Nomor SPL" : selectedRole === "CLIENT" ? "Nomor IPL" : "Nomor Dokumen";
   }
 
   if (docHint) {
-    docHint.textContent = `Masukkan nomor ${docType}. Nomor ini harus sudah diregister oleh Admin.`;
+    docHint.textContent =
+      selectedRole === "MITRA"
+        ? "Masukkan nomor SPL yang terdaftar."
+        : selectedRole === "CLIENT"
+        ? "Masukkan nomor IPL yang terdaftar."
+        : "";
   }
 }
 
-function toggleFields() {
-  const isAdmin = selectedRole === "ADMIN";
-
-  if (docFields) docFields.style.display = isAdmin ? "none" : "block";
-  if (adminCodeField) adminCodeField.style.display = isAdmin ? "block" : "none";
-
-  if (isAdmin) {
-    if (docNumberInput) docNumberInput.value = "";
-  } else {
-    updateDocUi();
-  }
-}
-
-function syncDocTypeDefault() {
-  if (!docTypeSelect) return;
-  const defaultType = getDefaultDocType(selectedRole, selectedAccountType);
-  if (!docTypeTouched || !docTypeSelect.value) {
-    docTypeSelect.value = defaultType;
-  }
-}
-
-function setActiveRole(role) {
-  selectedRole = role;
-  docTypeTouched = false;
-
-  roleRadios.forEach((radio) => {
-    radio.checked = String(radio.value).toUpperCase() === role;
+function savePendingSession(session) {
+  // Simpan “pending” agar callback email-link tahu konteks login.
+  // Memakai savePortalSession agar konsisten dengan sistem portal session Anda.
+  savePortalSession({
+    ...session,
+    status: "PENDING_EMAIL_LINK",
+    createdAt: new Date().toISOString()
   });
-
-  toggleFields();
-  syncDocTypeDefault();
 }
 
-function setAccountType(accountType) {
-  selectedAccountType = normalizeAccountType(accountType);
-  if (accountTypeSelect) accountTypeSelect.value = selectedAccountType;
-  if (!docTypeTouched) syncDocTypeDefault();
-  updateDocUi();
-}
+async function handleCompleteFromEmailLink() {
+  if (!hasEmailOtpLink()) return;
 
-function savePendingSession(payload) {
-  localStorage.setItem("lw_pending_login", JSON.stringify(payload));
-}
-
-function loadPendingSession() {
   try {
-    return JSON.parse(localStorage.getItem("lw_pending_login"));
-  } catch {
-    return null;
+    // Firebase will validate the link and sign-in.
+    const result = await completeEmailOtpSignIn();
+
+    // Setelah sign-in, biasanya token disimpan oleh modul session Anda (atau modul lain).
+    // Di sini minimal redirect ke portal (sesuaikan jika Anda punya routing berbeda).
+    const role = result?.role || selectedRole || "ADMIN";
+
+    if (role === "ADMIN") window.location.href = "/apps/admin/";
+    else if (role === "CLIENT") window.location.href = "/apps/client/";
+    else if (role === "MITRA") window.location.href = "/apps/mitra/";
+    else window.location.href = "/apps/login/";
+  } catch (err) {
+    console.error(err);
+    alert(err?.message || "Gagal menyelesaikan login dari link email.");
   }
 }
 
-function initFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const role = (params.get("role") || "").toUpperCase();
-  const accountType = normalizeAccountType(params.get("accountType"));
-  const docType = (params.get("docType") || "").toUpperCase();
-  const docNumber = params.get("docNumber") || "";
-
-  if (ROLE_OPTIONS.includes(role)) {
-    setActiveRole(role);
-  } else {
-    setActiveRole(selectedRole);
-  }
-
-  if (accountTypeSelect && accountType) {
-    setAccountType(accountType);
-  } else {
-    setAccountType(selectedAccountType);
-  }
-
-  if (docTypeSelect && docType) {
-    docTypeSelect.value = docType;
-    docTypeTouched = true;
-  }
-
-  if (docNumberInput && docNumber) {
-    docNumberInput.value = docNumber;
-  }
-
-  updateDocUi();
-}
-
+// Bind role radios
 roleRadios.forEach((radio) => {
-  radio.addEventListener("change", () => setActiveRole(String(radio.value).toUpperCase()));
+  radio.addEventListener("change", () => {
+    setSelectedRole(radio.value);
+  });
 });
 
-accountTypeSelect?.addEventListener("change", (event) => {
-  setAccountType(event.target.value);
-});
-
+// Track docType touched
 docTypeSelect?.addEventListener("change", () => {
   docTypeTouched = true;
-  updateDocUi();
 });
 
-initFromUrl();
+// Track accountType change
+accountTypeSelect?.addEventListener("change", () => {
+  selectedAccountType = normalizeAccountType(accountTypeSelect.value);
+  if (!docTypeTouched && docTypeSelect) {
+    docTypeSelect.value = getDefaultDocType(selectedRole, selectedAccountType) || docTypeSelect.value;
+  }
+});
 
+// Initial UI
+setSelectedRole(selectedRole);
+
+// Main action
 btnSend?.addEventListener("click", async () => {
   const email = emailInput?.value.trim() || "";
   const docNumber = docNumberInput?.value.trim() || "";
@@ -186,7 +156,7 @@ btnSend?.addEventListener("click", async () => {
   };
 
   try {
-    const gate = await apiFetch("/api/auth/request-link", {
+    const gate = await request(endpoints.auth.requestLink, {
       method: "POST",
       body: payload,
       headers: selectedRole === "ADMIN" ? { "x-admin-code": adminCode } : undefined
@@ -212,50 +182,12 @@ btnSend?.addEventListener("click", async () => {
       adminCode: selectedRole === "ADMIN" ? adminCode : null
     });
 
-    localStorage.setItem("lw_last_email", email);
-
-    alert("Tautan login dikirim via email. Buka email untuk menyelesaikan login.");
+    alert("Link login dikirim ke email. Silakan cek inbox/spam.");
   } catch (err) {
     console.error(err);
-    alert(err?.message || "Gagal mengirim tautan masuk");
+    alert(err?.message || "Gagal meminta link login.");
   }
 });
 
-(async function autoCompleteFromLink() {
-  try {
-    const isLink = await hasEmailOtpLink();
-    if (!isLink) return;
-
-    const stored = loadPendingSession() || {};
-    let email = stored.email || localStorage.getItem("lw_last_email") || emailInput?.value.trim();
-
-    if (!email) {
-      email = window.prompt("Masukkan email untuk menyelesaikan login:") || "";
-    }
-
-    if (!email) return;
-
-    const role = (stored.role || selectedRole || "CLIENT").toUpperCase();
-    const accountType = normalizeAccountType(stored.accountType || accountTypeSelect?.value);
-    const docType = stored.docType || docTypeSelect?.value || getDefaultDocType(role, accountType);
-    const docNumber = stored.docNumber || docNumberInput?.value || null;
-
-    const idToken = await completeEmailOtpSignIn(email);
-
-    savePortalSession({
-      role,
-      email,
-      idToken,
-      docType: role === "ADMIN" ? null : docType,
-      docNumber: role === "ADMIN" ? null : docNumber,
-      accountType: role === "ADMIN" ? null : accountType,
-      adminCode: role === "ADMIN" ? stored.adminCode || adminCodeInput?.value || null : null
-    });
-
-    if (role === "CLIENT") window.location.href = "/apps/client/";
-    if (role === "MITRA") window.location.href = "/apps/mitra/";
-    if (role === "ADMIN") window.location.href = "/apps/admin/";
-  } catch (err) {
-    console.error("Auto sign-in gagal", err);
-  }
-})();
+// Auto-complete if opened from email link
+handleCompleteFromEmailLink();
