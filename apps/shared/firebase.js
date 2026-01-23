@@ -11,7 +11,8 @@ import {
   signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
-import { apiFetch } from "/shared/apiClient.js";
+import { endpoints } from "/shared/http/endpoints.js";
+import { request } from "/shared/http/httpClient.js";
 
 function getFirebaseConfig() {
   const cfg = window.FIREBASE_CONFIG;
@@ -37,16 +38,41 @@ export function getFirebaseAuth() {
 
 export function waitForAuthReady(timeoutMs = 15000) {
   const auth = getFirebaseAuth();
+
   return new Promise((resolve, reject) => {
+    let done = false;
+
     const timer = setTimeout(() => {
-      reject(new Error("Timeout menunggu Firebase Auth"));
+      if (done) return;
+      done = true;
+      reject(new Error("Auth init timeout"));
     }, timeoutMs);
 
-    const unsub = onAuthStateChanged(auth, (user) => {
-      clearTimeout(timer);
-      unsub();
-      resolve(user);
-    });
+    const unsub = onAuthStateChanged(
+      auth,
+      () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        try {
+          unsub();
+        } catch {
+          // ignore
+        }
+        resolve(true);
+      },
+      (err) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        try {
+          unsub();
+        } catch {
+          // ignore
+        }
+        reject(err);
+      }
+    );
   });
 }
 
@@ -71,7 +97,7 @@ export async function signOutFirebase() {
 }
 
 async function validateRegistry(payload) {
-  const json = await apiFetch("/api/auth/request-link", {
+  const json = await request(endpoints.auth.requestLink, {
     method: "POST",
     body: payload
   });
@@ -97,17 +123,35 @@ function buildActionCodeSettings({ role, accountType, docType, docNumber }) {
   if (docNumber) params.set("docNumber", docNumber);
 
   return {
-    url: `${baseUrl}/apps/login/?${params.toString()}`,
+    url: `${baseUrl}/auth/finish?${params.toString()}`,
     handleCodeInApp: true
   };
 }
 
-export async function sendEmailLink(email, { role, accountType, docType, docNumber }) {
-  const auth = getFirebaseAuth();
+export function isEmailLinkSignIn() {
+  return isSignInWithEmailLink(getFirebaseAuth(), window.location.href);
+}
 
+export async function requestEmailLink({
+  email,
+  role,
+  accountType,
+  docType,
+  docNumber
+}) {
   if (!email) throw new Error("Email wajib diisi");
-  if (!role) throw new Error("Role wajib diisi");
 
+  // 1) cek registry dulu (ke API)
+  await validateRegistry({
+    email,
+    role,
+    accountType,
+    docType,
+    docNumber
+  });
+
+  // 2) kirim magic link
+  const auth = getFirebaseAuth();
   const actionCodeSettings = buildActionCodeSettings({
     role,
     accountType,
@@ -116,29 +160,43 @@ export async function sendEmailLink(email, { role, accountType, docType, docNumb
   });
 
   await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-  localStorage.setItem("lw_last_email", email);
+
+  // simpan email untuk penyelesaian sign-in
+  try {
+    window.localStorage.setItem("emailForSignIn", email);
+  } catch {
+    // ignore
+  }
+
+  return { ok: true };
 }
 
-export async function sendEmailOtp(
-  email,
-  { role, docType, docNumber, template, adminCode, accountType }
-) {
-  await validateRegistry({ email, role, docNumber, docType, template, adminCode, accountType });
-  await sendEmailLink(email, { role, accountType, docType, docNumber });
-}
-
-export async function hasEmailOtpLink() {
+export async function completeEmailLinkSignIn() {
   const auth = getFirebaseAuth();
-  return isSignInWithEmailLink(auth, window.location.href);
-}
+  const href = window.location.href;
 
-export async function completeEmailOtpSignIn(email) {
-  const auth = getFirebaseAuth();
+  if (!isSignInWithEmailLink(auth, href)) {
+    return { ok: false, reason: "not_email_link" };
+  }
 
-  if (!(await hasEmailOtpLink())) return null;
+  let email = "";
+  try {
+    email = window.localStorage.getItem("emailForSignIn") || "";
+  } catch {
+    // ignore
+  }
 
-  await signInWithEmailLink(auth, email, window.location.href);
-  localStorage.removeItem("lw_pending_login");
+  if (!email) {
+    throw new Error("Email tidak ditemukan. Ulangi proses login.");
+  }
 
-  return await getFirebaseIdToken(true);
+  await signInWithEmailLink(auth, email, href);
+
+  try {
+    window.localStorage.removeItem("emailForSignIn");
+  } catch {
+    // ignore
+  }
+
+  return { ok: true };
 }
