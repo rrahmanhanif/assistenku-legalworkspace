@@ -1,5 +1,6 @@
 import { signOutFirebase } from "../shared/firebase.js";
-import { apiFetch } from "/shared/apiClient.js";
+import { endpoints } from "/shared/http/endpoints.js";
+import { request, requestExternal, requestWithSession } from "/shared/http/httpClient.js";
 import { requireRole } from "/shared/guards.js";
 import { clearPortalSession, loadPortalSession } from "/shared/session.js";
 
@@ -26,6 +27,31 @@ const btnLock = document.getElementById("btnLock");
 
 let worklogs = [];
 let currentStatus = null;
+
+async function loadWhoAmI() {
+  const target = document.getElementById("whoamiInfo");
+  if (!target) return;
+
+  const session = loadPortalSession();
+  if (!session?.idToken) {
+    target.textContent = "Belum login.";
+    return;
+  }
+
+  target.textContent = "Memuat identitas...";
+
+  try {
+    const data = await request(endpoints.auth.whoami, { token: session.idToken });
+    const profile = data?.data || data || {};
+    const role = profile.role || session.role || "-";
+    const email = profile.email || session.email || "-";
+    const id = profile.id || profile.userId || profile.uid || "-";
+    target.textContent = `${role} • ${email} • ${id}`;
+  } catch (err) {
+    console.error(err);
+    target.textContent = "Gagal memuat identitas.";
+  }
+}
 
 function setLoading(isLoading, message = "Memproses...") {
   if (!loadingIndicator) return;
@@ -55,43 +81,46 @@ function getFormPayload() {
 
 function updateLockState(status) {
   const locked = status === "LOCKED_BY_SYSTEM" || status === "FINAL";
-
-  if (btnSaveDraft) btnSaveDraft.disabled = locked;
   if (btnUploadEvidence) btnUploadEvidence.disabled = locked;
-  if (evidenceFileInput) evidenceFileInput.disabled = locked;
   if (btnSubmit) btnSubmit.disabled = locked;
   if (btnLock) btnLock.disabled = locked;
+  if (btnSaveDraft) btnSaveDraft.disabled = locked;
 }
 
 function renderWorklogs() {
   if (!worklogsList) return;
 
   if (!worklogs.length) {
-    worklogsList.innerHTML = '<p class="muted">Belum ada worklog.</p>';
+    worklogsList.innerHTML = `<div class="muted">Belum ada worklog.</div>`;
     return;
   }
 
   worklogsList.innerHTML = worklogs
     .map((log) => {
-      const evidenceItems = (log.evidence || []).map((item) => {
-        const filename = item.filename || item.name || "Bukti";
-        const objectPath = item.objectPath || item.path || "";
-        return `
-          <li>
-            <span>${filename}</span>
-            <button class="secondary" data-action="view-evidence" data-path="${objectPath}">Lihat</button>
-          </li>
-        `;
-      });
+      const evidenceItems = Array.isArray(log?.evidence)
+        ? log.evidence.map((ev) => {
+            const path = ev?.objectPath || ev?.path || "";
+            const name = ev?.filename || ev?.name || "evidence";
+            return `
+              <li>
+                <button class="link" data-action="view-evidence" data-path="${path}">
+                  ${name}
+                </button>
+              </li>
+            `;
+          })
+        : [];
 
       return `
-        <div class="card" style="margin-bottom: 12px;">
+        <div class="card" style="margin-top: 12px;">
           <div class="row" style="justify-content: space-between; align-items: center;">
             <div>
               <strong>${log.date || "-"}</strong> • ${log.hours ?? "-"} jam
               <div class="muted">${log.notes || "-"}</div>
             </div>
-            <span class="pill ${String(log.status || "draft").toLowerCase()}">${log.status || "DRAFT"}</span>
+            <span class="pill ${String(log.status || "draft").toLowerCase()}">
+              ${log.status || "DRAFT"}
+            </span>
           </div>
           <div style="margin-top: 8px;">
             <div class="muted">Evidence:</div>
@@ -111,7 +140,7 @@ async function loadWorklogs() {
   const query = docNumber ? `?docNumber=${encodeURIComponent(docNumber)}` : "";
 
   try {
-    const data = await apiFetch(`/api/mitra/worklogs${query}`, { method: "GET" });
+    const data = await requestWithSession(`/api/mitra/worklogs${query}`, { method: "GET" });
     worklogs = data?.worklogs || data?.logs || [];
     currentStatus = data?.status || worklogs?.[0]?.status || null;
 
@@ -147,7 +176,7 @@ async function saveDraft(event) {
 
   try {
     setLoading(true, "Menyimpan draft...");
-    await apiFetch("/api/mitra/worklogs/create-or-update", {
+    await requestWithSession("/api/mitra/worklogs/create-or-update", {
       method: "POST",
       body: payload
     });
@@ -192,7 +221,7 @@ async function uploadEvidence() {
         contentType: file.type || "application/octet-stream"
       };
 
-      const uploadData = await apiFetch("/api/mitra/worklogs/evidence/upload-url", {
+      const uploadData = await requestWithSession("/api/mitra/worklogs/evidence/upload-url", {
         method: "POST",
         body: requestBody
       });
@@ -204,19 +233,13 @@ async function uploadEvidence() {
         throw new Error("Signed URL tidak tersedia dari API.");
       }
 
-      const putResponse = await fetch(signedUrl, {
+      await requestExternal(signedUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": file.type || "application/octet-stream"
-        },
+        headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file
       });
 
-      if (!putResponse.ok) {
-        throw new Error("Gagal upload file ke storage.");
-      }
-
-      await apiFetch("/api/mitra/worklogs/evidence/attach", {
+      await requestWithSession("/api/mitra/worklogs/evidence/attach", {
         method: "POST",
         body: {
           docNumber: payload.docNumber,
@@ -250,7 +273,7 @@ async function submitWorklog() {
 
   try {
     setLoading(true, "Mengirim worklog...");
-    await apiFetch("/api/mitra/worklogs/submit", {
+    await requestWithSession("/api/mitra/worklogs/submit", {
       method: "POST",
       body: {
         docType: "SPL",
@@ -278,7 +301,7 @@ async function lockWorklog() {
 
   try {
     setLoading(true, "Mengunci worklog...");
-    await apiFetch("/api/mitra/worklogs/lock", {
+    await requestWithSession("/api/mitra/worklogs/lock", {
       method: "POST",
       body: {
         docType: "SPL",
@@ -300,7 +323,7 @@ async function viewEvidence(objectPath) {
 
   try {
     setLoading(true, "Menyiapkan bukti...");
-    const data = await apiFetch(
+    const data = await requestWithSession(
       `/api/evidence/view-url?objectPath=${encodeURIComponent(objectPath)}`,
       { method: "GET" }
     );
@@ -349,4 +372,5 @@ function initDefaults() {
 
 bindActions();
 initDefaults();
+loadWhoAmI();
 loadWorklogs();
