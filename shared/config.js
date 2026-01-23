@@ -1,4 +1,13 @@
-window.__API_BASE__ = "https://api.assistenku.com";
+// shared/config.js
+
+// API Base URL (kompatibel dengan variable lama dan baru)
+window.__API_BASE_URL__ =
+  window.__API_BASE_URL__ ||
+  window.__API_BASE__ ||
+  "https://api.assistenku.com";
+
+// Tetap set __API_BASE__ agar kode lama tidak rusak
+window.__API_BASE__ = window.__API_BASE_URL__;
 
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBSL87qkuwSQU8aXvLuu24nV7jUoX2mOSA",
